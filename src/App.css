@@ -1,0 +1,21 @@
+.Chores {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.Chores-Container {
+  width: 100%;
+  max-width: 640px;
+}
+
+.Chores-Header h1 {
+  margin: 0 0 1rem;
+  font-size: 2rem;
+}
+
+.Chores-Main p {
+  margin: 0;
+  color: #555;
+}
