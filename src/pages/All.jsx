@@ -3,6 +3,7 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
 import { sortChoresByPointsThenFrequency } from '../utils/sortChores'
+import { useDoubleTap } from '../utils/useDoubleTap'
 
 function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus }) {
   const [editingChoreRowId, setEditingChoreRowId] = useState(null)
@@ -120,12 +121,19 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
     setEditingChoreRowId(null)
   }
 
+  const handleReassignTap = useDoubleTap((e) => {
+    const choreRowId = Number(e.currentTarget.dataset.choreRowId)
+    if (choreRowId) {
+      setEditingChoreRowId(choreRowId)
+    }
+  })
+
   return (
     <div className="All">
       <div className="All-Container">
         <header className="All-Header">
           <h2>All</h2>
-          <p>All chores from Assigned_To. Double-click a row to reassign.</p>
+          <p>All chores from Assigned_To. Double-click or double-tap a row to reassign.</p>
         </header>
         <section className="All-Content">
           {seedStatus === 'loading' && <p className="All-Loading">Loading chores...</p>}
@@ -210,7 +218,9 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
                   <li
                     key={item.choreRowId}
                     className={`All-ListItem${editingChoreRowId === item.choreRowId ? ' All-ListItem-Editing' : ''}`}
+                    data-chore-row-id={item.choreRowId}
                     onDoubleClick={() => setEditingChoreRowId(item.choreRowId)}
+                    onTouchEnd={handleReassignTap}
                   >
                     <div className="All-ListItem-Main">
                       <span className="All-ChoreName">{item.chore}</span>

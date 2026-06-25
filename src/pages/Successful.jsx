@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { useDoubleTap } from '../utils/useDoubleTap'
 
 const goodAtWhoRowId = 3
 
@@ -340,6 +341,14 @@ function Successful({ whoList, choreInfo, seedStatus }) {
     (person) => (failuresByWho[person.rowId] || []).length > 0,
   )
 
+  const handleFailureTap = useDoubleTap((e) => {
+    const whoRowId = Number(e.currentTarget.dataset.whoRowId)
+    const choreRowId = Number(e.currentTarget.dataset.choreRowId)
+    if (whoRowId && choreRowId) {
+      handleMarkSuccessful(whoRowId, choreRowId)
+    }
+  })
+
   return (
     <div className="Successful">
       <div className="Successful-Container">
@@ -464,7 +473,7 @@ function Successful({ whoList, choreInfo, seedStatus }) {
 
               <div className="Successful-Display-Section">
                 <h3 className="Successful-Display-Title">Not good at...</h3>
-                <p className="Successful-Display-Hint">Double-click a chore to mark it successful.</p>
+                <p className="Successful-Display-Hint">Double-click or double-tap a chore to mark it successful.</p>
 
                 {trackingStatus === 'loading' && (
                   <p className="Successful-Loading">Loading logs...</p>
@@ -487,7 +496,10 @@ function Successful({ whoList, choreInfo, seedStatus }) {
                             <li
                               key={failure.choreRowId}
                               className={`Successful-Failures-Who-ChoreItem${updatingFailureKey === `${person.rowId}-${failure.choreRowId}` ? ' Successful-Failures-Who-ChoreItem-Updating' : ''}`}
+                              data-who-row-id={person.rowId}
+                              data-chore-row-id={failure.choreRowId}
                               onDoubleClick={() => handleMarkSuccessful(person.rowId, failure.choreRowId)}
+                              onTouchEnd={handleFailureTap}
                             >
                               <ChoreHover
                                 choreRowId={failure.choreRowId}

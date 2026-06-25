@@ -331,6 +331,7 @@
 
 .Successful-Failures-Who-ChoreItem {
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .Successful-Failures-Who-ChoreItem:hover {
@@ -594,6 +595,7 @@
 
 .ManageChores-Table-Wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ManageChores-Table {
@@ -905,6 +907,7 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
   border: 1px solid rgba(139, 92, 246, 0.1);
   cursor: pointer;
+  touch-action: manipulation;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -1136,6 +1139,12 @@
   border-radius: 16px;
   background: rgba(236, 72, 153, 0.08);
   color: #be185d;
+}
+
+@media (max-width: 1024px) {
+  .Levels-LevelColumns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1427,6 +1436,89 @@
   cursor: pointer;
 }
 
+/* Tablet: iPad Pro portrait & landscape */
+@media (max-width: 1180px) {
+  .Chores {
+    padding: 1.15rem 1rem 2rem;
+  }
+
+  .Chores-Container {
+    max-width: 100%;
+  }
+
+  .Chores-Home {
+    padding: 1.35rem;
+  }
+
+  .Chores-Navbar-Buttons {
+    gap: 0.45rem;
+  }
+
+  .Points-ListItem,
+  .Points-GrandTotal {
+    flex-wrap: wrap;
+  }
+
+  .Points-BubbleRow,
+  .Points-GrandTotal-Bubbles {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .All-ListItem {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .All-ListItem-Assign {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .AssignedChores-Columns {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .Levels-WhoColumns {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .ManageChores-Form-Grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .Successful-Form {
+    max-width: none;
+  }
+
+  .Successful-Failures-Who {
+    flex: 1 1 14rem;
+  }
+}
+
+@media (max-width: 834px) {
+  .Levels-WhoColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .AssignedChores-Columns {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .AssignedChores-Filter-Button-Clear,
+  .All-SortButton-Clear,
+  .ManageChores-SearchButton-Clear {
+    margin-left: 0;
+  }
+
+  .ManageChores-Form-Grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .Chores {
     padding: 1rem 0.75rem 2rem;
@@ -1441,5 +1533,82 @@
   .Chores-Navbar-Top {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .Chores-Navbar-Button {
+    flex: 1 1 calc(50% - 0.25rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .Points-ListItem {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .Points-ListItem-Info {
+    min-width: 0;
+  }
+
+  .All-SortBar,
+  .ManageChores-SearchBar,
+  .AssignedChores-Filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .All-Combobox,
+  .All-SortSelect,
+  .ManageChores-Combobox,
+  .ManageChores-Combobox-Input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .All-SortButton-Clear,
+  .ManageChores-SearchButton-Clear {
+    width: 100%;
+  }
+
+  .AssignedChores-Columns {
+    grid-template-columns: 1fr;
+  }
+
+  .Successful-Failures-List {
+    flex-direction: column;
+  }
+
+  .Successful-Failures-Who {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1181px) {
+  .Chores {
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .Chores-Navbar-Button,
+  .AssignedChores-Filter-Button,
+  .All-SortButton-Clear,
+  .ManageChores-SearchButton-Clear,
+  .ManageChores-Button,
+  .Successful-Form-Button,
+  .AssignedChores-Warning-Button {
+    min-height: 44px;
+  }
+
+  .AssignedChores-ListItem,
+  .All-ListItem {
+    padding: 1rem;
+  }
+
+  .Chores-Navbar-Button:hover,
+  .AssignedChores-ListItem:hover {
+    transform: none;
   }
 }
