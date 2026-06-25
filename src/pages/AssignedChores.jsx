@@ -1,15 +1,22 @@
 import { useMemo, useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
+import { sortChoresByPointsThenFrequency } from '../utils/sortChores'
 
 function getSectionKey(whoRowId) {
   return whoRowId ?? 'unassigned'
 }
 
-function AssignedChores({ choreInfo, setChoreInfo, whoList, seedStatus }) {
+function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus }) {
   const [draggedChoreRowId, setDraggedChoreRowId] = useState(null)
   const [dragOverWho, setDragOverWho] = useState(null)
   const [selectedSectionKeys, setSelectedSectionKeys] = useState(null)
+
+  const challengeColorMap = useMemo(
+    () => getChallengeColorMap(challengeLevelsList),
+    [challengeLevelsList],
+  )
 
   const whoMap = useMemo(
     () => Object.fromEntries(whoList.map((person) => [person.rowId, person.name])),
@@ -66,10 +73,12 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, seedStatus }) {
   }
 
   function getChoresForSection(whoRowId) {
-    return choreInfo.filter((item) => {
+    const sectionChores = choreInfo.filter((item) => {
       if (whoRowId === null) return item.who == null
       return item.who === whoRowId
     })
+
+    return sortChoresByPointsThenFrequency(sectionChores)
   }
 
   async function handleDrop(targetWhoRowId) {
@@ -199,7 +208,12 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, seedStatus }) {
                         >
                           <span className="AssignedChores-ChoreName">{item.chore}</span>
                           {item.challenge && (
-                            <span className="AssignedChores-Tag AssignedChores-Tag-Challenge">{item.challenge}</span>
+                            <span
+                              className="AssignedChores-Tag AssignedChores-Tag-Challenge"
+                              style={getChallengeNameStyle(item.challenge, challengeColorMap)}
+                            >
+                              {item.challenge}
+                            </span>
                           )}
                           {item.points > 0 && (
                             <span className="AssignedChores-Tag AssignedChores-Tag-Points">{item.points} pt{item.points !== 1 ? 's' : ''}</span>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { getChallengeLevelStyle } from '../utils/challengeLevelColors'
 
 function getPersonKey(rowId) {
   return String(rowId)
@@ -104,13 +105,20 @@ function Levels({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
                         <h3 className="Levels-WhoColumn-Title">{person.name}</h3>
                       </div>
 
-                      <div className="Levels-LevelColumns">
-                        {challengeLevelsList.map((level) => {
+                      <div
+                        className="Levels-LevelColumns"
+                        style={{ gridTemplateColumns: `repeat(${challengeLevelsList.length}, minmax(0, 1fr))` }}
+                      >
+                        {challengeLevelsList.map((level, levelIndex) => {
                           const levelChores = getChoresForPersonAndLevel(person.rowId, level.challenge)
                           const levelPoints = levelChores.reduce((sum, item) => sum + (item.points || 0), 0)
 
                           return (
-                            <div key={level.rowId} className="Levels-LevelColumn">
+                            <div
+                              key={level.rowId}
+                              className="Levels-LevelColumn"
+                              style={getChallengeLevelStyle(levelIndex)}
+                            >
                               <div className="Levels-LevelColumn-Header">
                                 <h4 className="Levels-LevelColumn-Title">{level.challenge}</h4>
                                 <div className="Levels-LevelColumn-Stats">
@@ -124,7 +132,7 @@ function Levels({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
                                   <li key={item.choreRowId} className="Levels-ChoreListItem">
                                     <span className="Levels-ChoreName">{item.chore}</span>
                                     {item.frequency && (
-                                      <span className="Levels-ChoreTag">{item.frequency}</span>
+                                      <span className="Levels-ChoreFrequency">{item.frequency}</span>
                                     )}
                                   </li>
                                 ))}

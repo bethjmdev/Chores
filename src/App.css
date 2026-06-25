@@ -1,11 +1,11 @@
 .Chores {
   min-height: 100vh;
-  padding: 1.5rem 1rem 2.5rem;
+  padding: 1.25rem 0.75rem 2rem;
 }
 
 .Chores-Container {
   width: 100%;
-  max-width: 1100px;
+  max-width: min(96vw, 1720px);
   margin: 0 auto;
 }
 
@@ -99,6 +99,7 @@
 
 .Points-Container,
 .Levels-Container,
+.All-Container,
 .AssignedChores-Container,
 .Successful-Container,
 .CompletedBeth-Container,
@@ -111,6 +112,7 @@
 
 .Points-Header,
 .Levels-Header,
+.All-Header,
 .AssignedChores-Header,
 .Successful-Header,
 .CompletedBeth-Header,
@@ -122,6 +124,7 @@
 
 .Points-Content,
 .Levels-Content,
+.All-Content,
 .Successful-Content,
 .CompletedBeth-Content,
 .CompletedRobey-Content,
@@ -206,6 +209,125 @@
   color: #be185d;
 }
 
+.All-Content {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.All-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.All-ListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.All-ListItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(139, 92, 246, 0.1);
+}
+
+.All-ListItem-Editing {
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.All-ListItem-Main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.All-ChoreName {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.All-ListItem-Tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.All-Tag {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.All-Tag-Challenge {
+  background: var(--level-bg, rgba(139, 92, 246, 0.12));
+  border: 1px solid var(--level-border, transparent);
+  color: var(--level-text, #6d28d9);
+}
+
+.All-Tag-Frequency {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--muted);
+}
+
+.All-Tag-Points {
+  background: rgba(79, 124, 255, 0.1);
+  color: #3b5ccc;
+}
+
+.All-ListItem-Assign {
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.All-AssignedTo {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(79, 124, 255, 0.1);
+  color: #3b5ccc;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.All-AssignSelect {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.All-Loading {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(79, 124, 255, 0.08);
+  color: #3b5ccc;
+}
+
+.All-Error {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(236, 72, 153, 0.08);
+  color: #be185d;
+}
+
 .Levels-Content {
   padding: 0;
   border: none;
@@ -256,21 +378,21 @@
   min-height: 220px;
   padding: 0.75rem;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  background: var(--level-bg, rgba(255, 255, 255, 0.85));
+  border: 1px solid var(--level-border, rgba(139, 92, 246, 0.1));
 }
 
 .Levels-LevelColumn-Header {
   margin-bottom: 0.65rem;
   padding-bottom: 0.55rem;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 .Levels-LevelColumn-Title {
   margin: 0 0 0.35rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--level-text, var(--ink));
 }
 
 .Levels-LevelColumn-Stats {
@@ -284,17 +406,9 @@
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
   font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.Levels-LevelColumn-Count {
-  background: rgba(139, 92, 246, 0.12);
-  color: #6d28d9;
-}
-
-.Levels-LevelColumn-Points {
-  background: rgba(79, 124, 255, 0.12);
-  color: #3b5ccc;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--level-text, var(--muted));
 }
 
 .Levels-ChoreList {
@@ -324,14 +438,9 @@
   color: var(--ink);
 }
 
-.Levels-ChoreTag {
-  align-self: flex-start;
-  padding: 0.15rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(236, 72, 153, 0.12);
-  color: #be185d;
-  font-size: 0.65rem;
-  font-weight: 600;
+.Levels-ChoreFrequency {
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 .Levels-Loading {
@@ -541,8 +650,9 @@
 }
 
 .AssignedChores-Tag-Challenge {
-  background: rgba(139, 92, 246, 0.12);
-  color: #6d28d9;
+  background: var(--level-bg, rgba(139, 92, 246, 0.12));
+  border: 1px solid var(--level-border, transparent);
+  color: var(--level-text, #6d28d9);
 }
 
 .AssignedChores-Tag-Frequency {

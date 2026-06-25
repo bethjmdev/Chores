@@ -16,12 +16,14 @@ import Successful from './pages/Successful'
 import CompletedBeth from './pages/CompletedBeth'
 import CompletedRobey from './pages/CompletedRobey'
 import RobeySubcategories from './pages/RobeySubcategories'
+import All from './pages/All'
 
 const navItems = [
-  'Points',
-  'Levels',
+  'All',
   'Assigned Chores',
+  'Levels',
   'Successful?',
+  'Points',
   'Completed Beth',
   'Completed Robey',
   'Robey Subcategories',
@@ -31,6 +33,8 @@ function renderActivePage(activeNav, props) {
   switch (activeNav) {
     case 'Points':
       return <Points {...props} />
+    case 'All':
+      return <All {...props} />
     case 'Levels':
       return <Levels {...props} />
     case 'Assigned Chores':
@@ -118,27 +122,32 @@ function App() {
         console.log('Chores', choresData)
 
         const whoMap = Object.fromEntries(whoData.map((person) => [person.rowId, person.name]))
-        const choreMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.chore]))
         const challengeMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.challenge]))
         const pointsMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.points]))
         const frequencyMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.frequency]))
-        const choreChallengeLevelMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.challengeLevel]))
-        const choreFreqIdMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.freqId]))
+        const frequencySortMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.sort]))
 
-        const joinedChoreInfo = assignedToData.map((assignment) => {
-          const challengeLevelId = choreChallengeLevelMap[assignment.choreRowId]
-          const freqId = choreFreqIdMap[assignment.choreRowId]
+        const assignedToMap = Object.fromEntries(
+          assignedToData.map((assignment) => [assignment.choreRowId, assignment.who ?? null]),
+        )
 
-          return {
-            choreRowId: assignment.choreRowId,
-            who: assignment.who ?? null,
-            name: assignment.who != null ? whoMap[assignment.who] : null,
-            chore: choreMap[assignment.choreRowId] ?? null,
-            challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
-            points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
-            frequency: freqId != null ? frequencyMap[freqId] : null,
-          }
-        })
+        const joinedChoreInfo = choresData
+          .map((chore) => {
+            const who = assignedToMap[chore.rowId] ?? null
+            const challengeLevelId = chore.challengeLevel
+            const freqId = chore.freqId
+
+            return {
+              choreRowId: chore.rowId,
+              who,
+              name: who != null ? whoMap[who] : null,
+              chore: chore.chore ?? null,
+              challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
+              points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
+              frequency: freqId != null ? frequencyMap[freqId] : null,
+              frequencySort: freqId != null ? frequencySortMap[freqId] : null,
+            }
+          })
 
         setWhoList(whoData.sort((a, b) => a.rowId - b.rowId))
         setChallengeLevelsList(challengeLevelsData.sort((a, b) => a.rowId - b.rowId))
@@ -163,7 +172,6 @@ function App() {
         <nav className="Chores-Navbar">
           <div className="Chores-Navbar-Top">
             <h1 className="Chores-Navbar-Logo">Chores</h1>
-            <p className="Chores-Navbar-Tagline">Home management, simplified</p>
           </div>
           <div className="Chores-Navbar-Buttons">
             {navItems.map((label) => (
