@@ -17,6 +17,10 @@ export function getRobeyRowId(whoList) {
   return whoList.find((person) => person.name === 'Robey')?.rowId ?? null
 }
 
+export function getBethRowId(whoList) {
+  return whoList.find((person) => person.name === 'Beth')?.rowId ?? null
+}
+
 function getCompletionWhoRowId(entry) {
   return entry.who ?? entry.whoRowid ?? null
 }
@@ -178,7 +182,7 @@ function buildQueueItem({
 
 export async function saveQueueCompletion({
   item,
-  robeyRowId,
+  personRowId,
   whenCompletedList,
   choresList,
   isComplete,
@@ -210,7 +214,7 @@ export async function saveQueueCompletion({
   const completion = whenCompletedList.find((entry) => {
     const whoRowId = getCompletionWhoRowId(entry)
     const choreRowId = getCompletionChoreRowId(entry)
-    return whoRowId === robeyRowId && choreRowId === item.choreRowId
+    return whoRowId === personRowId && choreRowId === item.choreRowId
   })
 
   if (completion) {
@@ -240,7 +244,7 @@ export async function saveQueueCompletion({
 
   await setDoc(doc(db, 'When_Completed', String(newRowId)), {
     rowId: newRowId,
-    whoRowid: robeyRowId,
+    whoRowid: personRowId,
     choreRowid: item.choreRowId,
     freqRowid: chore?.freqId ?? null,
     timestamp: completedAt,
@@ -252,7 +256,7 @@ export async function saveQueueCompletion({
 export async function saveQueueDayMove({
   item,
   dayIndex,
-  robeyRowId,
+  personRowId,
   whenCompletedList,
   choresList,
   frequencyOfList,
@@ -280,7 +284,7 @@ export async function saveQueueDayMove({
   const completion = whenCompletedList.find((entry) => {
     const whoRowId = getCompletionWhoRowId(entry)
     const choreRowId = getCompletionChoreRowId(entry)
-    return whoRowId === robeyRowId && choreRowId === item.choreRowId
+    return whoRowId === personRowId && choreRowId === item.choreRowId
   })
 
   if (completion) {
@@ -301,7 +305,7 @@ export async function saveQueueDayMove({
 
   await setDoc(doc(db, 'When_Completed', String(newRowId)), {
     rowId: newRowId,
-    whoRowid: robeyRowId,
+    whoRowid: personRowId,
     choreRowid: item.choreRowId,
     freqRowid: chore?.freqId ?? null,
     ...movePatch,
@@ -547,4 +551,149 @@ export function buildRobeyQueueSchedule({
   })
 
   return { robeyRowId, days, asNeededItems, catchUpItems }
+}
+
+export function buildBethQueueSchedule({
+  whoList,
+  choreInfo,
+  choresList,
+  whenCompletedList,
+  frequencyOfList,
+  timeOfDayList = [],
+  now = Date.now(),
+}) {
+  const personRowId = getBethRowId(whoList)
+  if (personRowId == null) {
+    return { personRowId: null, days: [], asNeededItems: [], catchUpItems: [] }
+  }
+
+  const todayStart = getStartOfToday(now)
+  const maxDayIndex = MAX_QUEUE_DAYS - 1
+  const freqMap = Object.fromEntries(frequencyOfList.map((freq) => [freq.rowId, freq]))
+  const activeChoreIds = new Set(
+    choresList.filter((chore) => chore.active !== 0).map((chore) => chore.rowId),
+  )
+
+  const personChores = choreInfo.filter(
+    (item) => item.who === personRowId && activeChoreIds.has(item.choreRowId),
+  )
+
+  const completionMap = new Map()
+  whenCompletedList.forEach((entry) => {
+    const whoRowId = getCompletionWhoRowId(entry)
+    const choreRowId = getCompletionChoreRowId(entry)
+
+    if (whoRowId === personRowId && choreRowId != null) {
+      completionMap.set(choreRowId, entry)
+    }
+  })
+
+  const queueItems = []
+  const asNeededItems = []
+  const catchUpItems = []
+
+  function addCatchUpItem(baseKey, baseItem, catchUpDetails) {
+    if (!catchUpDetails) {
+      return
+    }
+
+    catchUpItems.push({
+      ...baseItem,
+      key: `${baseKey}-catchUp`,
+      missedDayLabel: catchUpDetails.missedDayLabel,
+      missedDayStart: catchUpDetails.missedDayStart,
+      daysAgo: catchUpDetails.daysAgo,
+    })
+  }
+
+  personChores.forEach((chore) => {
+    const completion = completionMap.get(chore.choreRowId)
+    const freq = getFreqFromMap(freqMap, chore.freqId)
+    const baseItem = {
+      type: 'chore',
+      label: chore.chore,
+      parentChore: null,
+      frequency: chore.frequency,
+      frequencySort: chore.frequencySort ?? 999,
+      choreRowId: chore.choreRowId,
+      subcategoryRowId: null,
+      queueDayLabel: getQueueWeekdayLabel(completion?.dueDayOfWeek),
+      preferredTimeOfDay: completion?.preferredTimeOfDay ?? null,
+      timeOfDaySort: getTimeOfDaySort(completion?.preferredTimeOfDay, timeOfDayList),
+      timeOfDayIcon: getPreferredTimeOfDayIcon(completion?.preferredTimeOfDay, timeOfDayList),
+      timeOfDayLabel: getPreferredTimeOfDayLabel(completion?.preferredTimeOfDay, timeOfDayList),
+    }
+
+    if (isAsNeededFrequency(freq)) {
+      const intervalDays = getFrequencyQueueConfig(freq).intervalDays
+      const completedAt = completion?.timestamp ?? null
+
+      if (!isDueInQueueWindow(completedAt, intervalDays, todayStart)) {
+        return
+      }
+
+      asNeededItems.push({
+        ...baseItem,
+        key: `chore-${chore.choreRowId}-asNeeded`,
+        completedAt,
+      })
+      return
+    }
+
+    const dayIndexes = getQueueDayIndexes({
+      freq,
+      completedAt: completion?.timestamp ?? null,
+      queueDueAt: completion?.queueDueAt,
+      dueDayOfWeek: completion?.dueDayOfWeek,
+      sort: chore.choreRowId,
+      rowId: chore.choreRowId,
+      todayStart,
+      maxDayIndex,
+    })
+
+    addCatchUpItem(`chore-${chore.choreRowId}`, baseItem, getCatchUpDetails({
+      freq,
+      completedAt: completion?.timestamp ?? null,
+      queueDueAt: completion?.queueDueAt,
+      dueDayOfWeek: completion?.dueDayOfWeek,
+      sort: chore.choreRowId,
+      rowId: chore.choreRowId,
+      todayStart,
+      maxDayIndex,
+    }))
+
+    dayIndexes.forEach((dayIndex) => {
+      queueItems.push(
+        buildQueueItem({
+          baseKey: `chore-${chore.choreRowId}`,
+          ...baseItem,
+          dayIndex,
+        }),
+      )
+    })
+  })
+
+  catchUpItems.sort((a, b) => {
+    if (b.daysAgo !== a.daysAgo) {
+      return b.daysAgo - a.daysAgo
+    }
+
+    return compareQueueItemsByTimeOfDay(a, b)
+  })
+
+  asNeededItems.sort(compareQueueItemsByTimeOfDay)
+
+  const days = Array.from({ length: MAX_QUEUE_DAYS }, (_, dayIndex) => {
+    const items = queueItems
+      .filter((item) => item.dayIndex === dayIndex)
+      .sort(compareQueueItemsByTimeOfDay)
+
+    return {
+      dayIndex,
+      label: formatDayLabel(dayIndex, todayStart),
+      items,
+    }
+  })
+
+  return { personRowId, days, asNeededItems, catchUpItems }
 }

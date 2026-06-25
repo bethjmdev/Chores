@@ -20,6 +20,7 @@ import CompletedBeth from './pages/CompletedBeth'
 import CompletedRobey from './pages/CompletedRobey'
 import RobeySubcategories from './pages/RobeySubcategories'
 import RobeyQueue from './pages/RobeyQueue'
+import BethQueue from './pages/BethQueue'
 import All from './pages/All'
 import ManageChores from './pages/ManageChores'
 
@@ -29,7 +30,8 @@ const navItems = [
   'Levels',
   'Points',
   'Successful?',
-  'Completed Beth',
+  //   'Completed Beth',
+  'Beth Queue',
   // 'Completed Robey',
   'Robey Subcategories',
   'Robey Queue',
@@ -58,6 +60,8 @@ function renderActivePage(activeNav, props) {
       return <RobeySubcategories {...props} />
     case 'Robey Queue':
       return <RobeyQueue {...props} />
+    case 'Beth Queue':
+      return <BethQueue {...props} />
     default:
       return <AssignedChores {...props} />
   }

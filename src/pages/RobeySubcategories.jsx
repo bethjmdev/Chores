@@ -532,7 +532,7 @@ function RobeySubcategories({
                       className="RobeySubcategories-Form-Input"
                       value={addForm.label}
                       onChange={(e) => setAddForm((prev) => ({ ...prev, label: e.target.value }))}
-                      placeholder="e.g. bedroom, office, cam's room"
+                      placeholder="ex. empty dishwasher"
                       required
                     />
                   </div>

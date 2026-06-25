@@ -106,7 +106,8 @@
 .CompletedBeth-Container,
 .CompletedRobey-Container,
 .RobeySubcategories-Container,
-.RobeyQueue-Container {
+.RobeyQueue-Container,
+.BethQueue-Container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -121,7 +122,8 @@
 .CompletedBeth-Header,
 .CompletedRobey-Header,
 .RobeySubcategories-Header,
-.RobeyQueue-Header {
+.RobeyQueue-Header,
+.BethQueue-Header {
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(139, 92, 246, 0.12);
 }
@@ -134,7 +136,8 @@
 .CompletedBeth-Content,
 .CompletedRobey-Content,
 .RobeySubcategories-Content,
-.RobeyQueue-Content {
+.RobeyQueue-Content,
+.BethQueue-Content {
   padding: 1.25rem;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));

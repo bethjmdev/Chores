@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
-import { buildRobeyQueueSchedule, saveQueueCompletion, saveQueueDayMove, MAX_QUEUE_DAYS } from '../utils/robeyQueueSchedule'
+import { buildBethQueueSchedule, saveQueueCompletion, saveQueueDayMove, MAX_QUEUE_DAYS } from '../utils/robeyQueueSchedule'
 import { useViewSelection } from '../utils/viewSelectionStorage'
 
-const QUEUE_VIEW_STORAGE_KEY = 'chores-view-robey-queue-days'
+const QUEUE_VIEW_STORAGE_KEY = 'chores-view-beth-queue-days'
 
 function getDayKey(dayIndex) {
   return String(dayIndex)
 }
 
-function RobeyQueue({
+function BethQueue({
   whoList,
   choreInfo,
   choresList,
-  robeySubcategoryList,
   whenCompletedList,
   frequencyOfList,
   timeOfDayList = [],
@@ -35,11 +34,10 @@ function RobeyQueue({
   )
 
   const schedule = useMemo(
-    () => buildRobeyQueueSchedule({
+    () => buildBethQueueSchedule({
       whoList,
       choreInfo,
       choresList,
-      robeySubcategoryList,
       whenCompletedList,
       frequencyOfList,
       timeOfDayList,
@@ -48,7 +46,6 @@ function RobeyQueue({
       whoList,
       choreInfo,
       choresList,
-      robeySubcategoryList,
       whenCompletedList,
       frequencyOfList,
       timeOfDayList,
@@ -125,7 +122,7 @@ function RobeyQueue({
   }
 
   async function handleComplete(item) {
-    if (schedule.robeyRowId == null) {
+    if (schedule.personRowId == null) {
       return
     }
 
@@ -134,7 +131,7 @@ function RobeyQueue({
     try {
       await saveQueueCompletion({
         item,
-        personRowId: schedule.robeyRowId,
+        personRowId: schedule.personRowId,
         whenCompletedList,
         choresList,
         isComplete: true,
@@ -171,12 +168,6 @@ function RobeyQueue({
           <div className="RobeyQueue-CheckLabel-Content">
             <div className="RobeyQueue-Day-ListItem-Label">
               {item.label}
-              {item.type === 'subcategory' && item.parentChore && (
-                <span className="RobeyQueue-Day-ListItem-ParentInline">
-                  {' · '}
-                  {item.parentChore}
-                </span>
-              )}
             </div>
             <div className="RobeyQueue-Day-ListItem-Meta">
               {showMissedDay && item.missedDayLabel && (
@@ -217,7 +208,7 @@ function RobeyQueue({
   }
 
   async function handleDrop(targetDayIndex) {
-    if (draggedItemKey == null || schedule.robeyRowId == null) {
+    if (draggedItemKey == null || schedule.personRowId == null) {
       return
     }
 
@@ -234,7 +225,7 @@ function RobeyQueue({
       await saveQueueDayMove({
         item,
         dayIndex: targetDayIndex,
-        personRowId: schedule.robeyRowId,
+        personRowId: schedule.personRowId,
         whenCompletedList,
         choresList,
         frequencyOfList,
@@ -252,17 +243,17 @@ function RobeyQueue({
   }
 
   return (
-    <div className="RobeyQueue">
-      <div className="RobeyQueue-Container">
-        <header className="RobeyQueue-Header">
-          <h2>Robey Queue</h2>
+    <div className="BethQueue">
+      <div className="BethQueue-Container">
+        <header className="BethQueue-Header">
+          <h2>Beth Queue</h2>
           <p>
             Check off when done — it leaves that day and comes back after the frequency interval.
             Use Catch up for chores that were missed on a past day.
           </p>
         </header>
 
-        <section className="RobeyQueue-Content">
+        <section className="BethQueue-Content">
           {seedStatus === 'loading' && (
             <p className="RobeyQueue-Loading">Loading queue...</p>
           )}
@@ -270,15 +261,15 @@ function RobeyQueue({
             <p className="RobeyQueue-Error">Could not load queue.</p>
           )}
 
-          {seedStatus === 'ready' && schedule.robeyRowId == null && (
-            <p className="RobeyQueue-Empty">Robey was not found in the Who table.</p>
+          {seedStatus === 'ready' && schedule.personRowId == null && (
+            <p className="RobeyQueue-Empty">Beth was not found in the Who table.</p>
           )}
 
-          {seedStatus === 'ready' && schedule.robeyRowId != null && totalQueueItems === 0 && (
+          {seedStatus === 'ready' && schedule.personRowId != null && totalQueueItems === 0 && (
             <p className="RobeyQueue-Empty">Nothing in the queue right now.</p>
           )}
 
-          {seedStatus === 'ready' && schedule.robeyRowId != null && (
+          {seedStatus === 'ready' && schedule.personRowId != null && (
             <>
               <div className="RobeyQueue-Filter">
                 <span className="RobeyQueue-Filter-Label">View</span>
@@ -410,4 +401,4 @@ function RobeyQueue({
   )
 }
 
-export default RobeyQueue
+export default BethQueue

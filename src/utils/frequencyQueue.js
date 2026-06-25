@@ -356,6 +356,11 @@ function getRawQueueDayIndexes({
     return []
   }
 
+  if (dueDayOfWeek != null && isMultiDayQueuePattern(config.queuePattern)) {
+    const dayIndex = getWeekdayInWindow(dueDayOfWeek, todayStart, maxDayIndex)
+    return dayIndex == null ? [] : [dayIndex]
+  }
+
   switch (config.queuePattern) {
     case 'daily':
       return Array.from({ length: maxDayIndex + 1 }, (_, dayIndex) => dayIndex)
