@@ -1,13 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { getChallengeLevelStyle } from '../utils/challengeLevelColors'
 import { sortChoresByFrequency } from '../utils/sortChores'
+import { useViewSelection } from '../utils/viewSelectionStorage'
+
+const LEVELS_VIEW_STORAGE_KEY = 'chores-view-levels'
 
 function getPersonKey(rowId) {
   return String(rowId)
 }
 
 function Levels({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
-  const [selectedPersonKeys, setSelectedPersonKeys] = useState(null)
+  const personKeys = useMemo(
+    () => whoList.map((person) => getPersonKey(person.rowId)),
+    [whoList],
+  )
+
+  const [selectedPersonKeys, setSelectedPersonKeys] = useViewSelection(
+    LEVELS_VIEW_STORAGE_KEY,
+    personKeys,
+  )
 
   const isShowingAll = selectedPersonKeys === null
 

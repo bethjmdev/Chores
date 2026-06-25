@@ -57,6 +57,7 @@ function App() {
   const [choreInfo, setChoreInfo] = useState([])
   const [whoList, setWhoList] = useState([])
   const [challengeLevelsList, setChallengeLevelsList] = useState([])
+  const [frequencyOfList, setFrequencyOfList] = useState([])
   const [activeNav, setActiveNav] = useState('Assigned Chores')
   const hasLoaded = useRef(false)
 
@@ -143,14 +144,17 @@ function App() {
               name: who != null ? whoMap[who] : null,
               chore: chore.chore ?? null,
               challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
+              challengeLevelId: challengeLevelId ?? null,
               points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
               frequency: freqId != null ? frequencyMap[freqId] : null,
+              freqId: freqId ?? null,
               frequencySort: freqId != null ? frequencySortMap[freqId] : null,
             }
           })
 
         setWhoList(whoData.sort((a, b) => a.rowId - b.rowId))
         setChallengeLevelsList(challengeLevelsData.sort((a, b) => a.rowId - b.rowId))
+        setFrequencyOfList(frequencyOfData.sort((a, b) => a.sort - b.sort))
         setChoreInfo(joinedChoreInfo)
         setSeedStatus('ready')
 
@@ -188,7 +192,7 @@ function App() {
         </nav>
 
         <main className="Chores-Home">
-          {renderActivePage(activeNav, { choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus })}
+          {renderActivePage(activeNav, { choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus })}
         </main>
       </div>
     </div>

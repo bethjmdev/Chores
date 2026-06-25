@@ -3,6 +3,9 @@ import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
 import { sortChoresByFrequency } from '../utils/sortChores'
+import { useViewSelection } from '../utils/viewSelectionStorage'
+
+const ASSIGNED_VIEW_STORAGE_KEY = 'chores-view-assigned-chores'
 
 function getSectionKey(whoRowId) {
   return whoRowId ?? 'unassigned'
@@ -11,7 +14,16 @@ function getSectionKey(whoRowId) {
 function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus }) {
   const [draggedChoreRowId, setDraggedChoreRowId] = useState(null)
   const [dragOverWho, setDragOverWho] = useState(null)
-  const [selectedSectionKeys, setSelectedSectionKeys] = useState(null)
+
+  const sectionKeys = useMemo(
+    () => whoList.map((person) => getSectionKey(person.rowId)).concat(['unassigned']),
+    [whoList],
+  )
+
+  const [selectedSectionKeys, setSelectedSectionKeys] = useViewSelection(
+    ASSIGNED_VIEW_STORAGE_KEY,
+    sectionKeys,
+  )
 
   const challengeColorMap = useMemo(
     () => getChallengeColorMap(challengeLevelsList),
