@@ -9,10 +9,49 @@ import { db } from './firebase'
 // import { seedWhenCompletedIfEmpty } from './seedWhenCompleted'
 // import { seedSuccessTrackingIfEmpty } from './seedSuccessTracking'
 import './App.css'
+import Points from './pages/Points'
+import Levels from './pages/Levels'
+import AssignedChores from './pages/AssignedChores'
+import Successful from './pages/Successful'
+import CompletedBeth from './pages/CompletedBeth'
+import CompletedRobey from './pages/CompletedRobey'
+import RobeySubcategories from './pages/RobeySubcategories'
+
+const navItems = [
+  'Points',
+  'Levels',
+  'Assigned Chores',
+  'Successful?',
+  'Completed Beth',
+  'Completed Robey',
+  'Robey Subcategories',
+]
+
+function renderActivePage(activeNav, props) {
+  switch (activeNav) {
+    case 'Points':
+      return <Points />
+    case 'Levels':
+      return <Levels />
+    case 'Assigned Chores':
+      return <AssignedChores {...props} />
+    case 'Successful?':
+      return <Successful />
+    case 'Completed Beth':
+      return <CompletedBeth />
+    case 'Completed Robey':
+      return <CompletedRobey />
+    case 'Robey Subcategories':
+      return <RobeySubcategories />
+    default:
+      return <AssignedChores {...props} />
+  }
+}
 
 function App() {
   const [seedStatus, setSeedStatus] = useState('loading')
   const [choreInfo, setChoreInfo] = useState([])
+  const [activeNav, setActiveNav] = useState('Assigned Chores')
   const hasLoaded = useRef(false)
 
   useEffect(() => {
@@ -114,13 +153,27 @@ function App() {
   return (
     <div className="Chores">
       <div className="Chores-Container">
-        <header className="Chores-Header">
-          <h1>Chores</h1>
-        </header>
-        <main className="Chores-Main">
-          {seedStatus === 'loading' && <p>Loading data...</p>}
-          {seedStatus === 'ready' && <p>Data loaded.</p>}
-          {seedStatus === 'error' && <p>Could not load data. Check Firestore rules.</p>}
+        <nav className="Chores-Navbar">
+          <div className="Chores-Navbar-Top">
+            <h1 className="Chores-Navbar-Logo">Chores</h1>
+            <p className="Chores-Navbar-Tagline">Home management, simplified</p>
+          </div>
+          <div className="Chores-Navbar-Buttons">
+            {navItems.map((label) => (
+              <button
+                key={label}
+                type="button"
+                className={`Chores-Navbar-Button${activeNav === label ? ' Chores-Navbar-Button-Active' : ''}`}
+                onClick={() => setActiveNav(label)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <main className="Chores-Home">
+          {renderActivePage(activeNav, { choreInfo, seedStatus })}
         </main>
       </div>
     </div>

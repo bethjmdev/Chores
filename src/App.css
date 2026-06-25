@@ -1,21 +1,220 @@
 .Chores {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem 2.5rem;
 }
 
 .Chores-Container {
   width: 100%;
-  max-width: 640px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.Chores-Header h1 {
-  margin: 0 0 1rem;
-  font-size: 2rem;
+.Chores-Navbar {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
 }
 
-.Chores-Main p {
+.Chores-Navbar-Top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.Chores-Navbar-Logo {
   margin: 0;
-  color: #555;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.Chores-Navbar-Tagline {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.Chores-Navbar-Buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.Chores-Navbar-Button {
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.Chores-Navbar-Button:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+}
+
+.Chores-Navbar-Button-Active {
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.28);
+}
+
+.Chores-Home {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--surface-border);
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow);
+}
+
+.Chores-Home h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.Chores-Home p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.Points-Container,
+.Levels-Container,
+.AssignedChores-Container,
+.Successful-Container,
+.CompletedBeth-Container,
+.CompletedRobey-Container,
+.RobeySubcategories-Container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.Points-Header,
+.Levels-Header,
+.AssignedChores-Header,
+.Successful-Header,
+.CompletedBeth-Header,
+.CompletedRobey-Header,
+.RobeySubcategories-Header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.Points-Content,
+.Levels-Content,
+.Successful-Content,
+.CompletedBeth-Content,
+.CompletedRobey-Content,
+.RobeySubcategories-Content {
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.AssignedChores-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.AssignedChores-ListItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.8));
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.AssignedChores-ListItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(139, 92, 246, 0.12);
+}
+
+.AssignedChores-ChoreName {
+  flex: 1 1 220px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.AssignedChores-Tag {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.AssignedChores-Tag-Name {
+  background: rgba(79, 124, 255, 0.12);
+  color: #3b5ccc;
+}
+
+.AssignedChores-Tag-Challenge {
+  background: rgba(139, 92, 246, 0.12);
+  color: #6d28d9;
+}
+
+.AssignedChores-Tag-Frequency {
+  background: rgba(236, 72, 153, 0.12);
+  color: #be185d;
+}
+
+.AssignedChores-Loading,
+.AssignedChores-Error {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  font-size: 0.95rem;
+}
+
+.AssignedChores-Loading {
+  background: rgba(79, 124, 255, 0.08);
+  color: #3b5ccc;
+}
+
+.AssignedChores-Error {
+  background: rgba(236, 72, 153, 0.08);
+  color: #be185d;
+}
+
+@media (max-width: 640px) {
+  .Chores {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .Chores-Navbar,
+  .Chores-Home {
+    border-radius: 18px;
+    padding: 1rem;
+  }
+
+  .Chores-Navbar-Top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
