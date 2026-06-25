@@ -51,6 +51,7 @@ function renderActivePage(activeNav, props) {
 function App() {
   const [seedStatus, setSeedStatus] = useState('loading')
   const [choreInfo, setChoreInfo] = useState([])
+  const [whoList, setWhoList] = useState([])
   const [activeNav, setActiveNav] = useState('Assigned Chores')
   const hasLoaded = useRef(false)
 
@@ -128,6 +129,7 @@ function App() {
 
           return {
             choreRowId: assignment.choreRowId,
+            who: assignment.who ?? null,
             name: assignment.who != null ? whoMap[assignment.who] : null,
             chore: choreMap[assignment.choreRowId] ?? null,
             challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
@@ -135,6 +137,7 @@ function App() {
           }
         })
 
+        setWhoList(whoData.sort((a, b) => a.rowId - b.rowId))
         setChoreInfo(joinedChoreInfo)
         setSeedStatus('ready')
 
@@ -173,7 +176,7 @@ function App() {
         </nav>
 
         <main className="Chores-Home">
-          {renderActivePage(activeNav, { choreInfo, seedStatus })}
+          {renderActivePage(activeNav, { choreInfo, setChoreInfo, whoList, seedStatus })}
         </main>
       </div>
     </div>
