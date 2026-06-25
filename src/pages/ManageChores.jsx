@@ -35,10 +35,33 @@ function ManageChores({
     [challengeLevelsList],
   )
 
-  const sortedChores = useMemo(
-    () => [...choresList].sort((a, b) => a.rowId - b.rowId),
-    [choresList],
+  const challengePointsMap = useMemo(
+    () => Object.fromEntries(challengeLevelsList.map((level) => [level.rowId, level.points])),
+    [challengeLevelsList],
   )
+
+  const frequencySortMap = useMemo(
+    () => Object.fromEntries(frequencyOfList.map((freq) => [freq.rowId, freq.sort])),
+    [frequencyOfList],
+  )
+
+  const sortedChores = useMemo(() => {
+    return [...choresList].sort((a, b) => {
+      const pointsA = challengePointsMap[a.challengeLevel] ?? 999
+      const pointsB = challengePointsMap[b.challengeLevel] ?? 999
+      if (pointsA !== pointsB) {
+        return pointsA - pointsB
+      }
+
+      const sortA = frequencySortMap[a.freqId] ?? 999
+      const sortB = frequencySortMap[b.freqId] ?? 999
+      if (sortA !== sortB) {
+        return sortA - sortB
+      }
+
+      return a.rowId - b.rowId
+    })
+  }, [choresList, challengePointsMap, frequencySortMap])
 
   const choreSearchOptions = useMemo(
     () => [...choresList].sort((a, b) => (a.chore || '').localeCompare(b.chore || '')),

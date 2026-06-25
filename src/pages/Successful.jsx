@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
 const goodAtWhoRowId = 3
@@ -24,13 +24,19 @@ function getIsSuccess(entry) {
   return null
 }
 
+function matchesWhoChore(entry, whoNum, choreNum) {
+  return Number(getWhoRowId(entry)) === whoNum && Number(getChoreRowId(entry)) === choreNum
+}
+
+function getTrackingDocId(whoNum, choreNum) {
+  return `${whoNum}_${choreNum}`
+}
+
 function findExistingEntries(whoRowId, choreRowId, entries) {
   const whoNum = Number(whoRowId)
   const choreNum = Number(choreRowId)
 
-  return entries.filter(
-    (entry) => getWhoRowId(entry) === whoNum && getChoreRowId(entry) === choreNum,
-  )
+  return entries.filter((entry) => matchesWhoChore(entry, whoNum, choreNum))
 }
 
 function ChoreHover({ choreRowId, choreName, choreDetailsMap, children }) {
@@ -67,6 +73,11 @@ function Successful({ whoList, choreInfo, seedStatus }) {
 
   const whoMap = useMemo(
     () => Object.fromEntries(whoList.map((person) => [person.rowId, person.name])),
+    [whoList],
+  )
+
+  const whoFormOptions = useMemo(
+    () => whoList.filter((person) => person.rowId !== goodAtWhoRowId),
     [whoList],
   )
 
@@ -226,8 +237,7 @@ function Successful({ whoList, choreInfo, seedStatus }) {
 
     const matchingEntries = trackingList.filter(
       (entry) =>
-        getWhoRowId(entry) === whoRowId &&
-        getChoreRowId(entry) === choreRowId &&
+        matchesWhoChore(entry, whoRowId, choreRowId) &&
         getIsSuccess(entry) === 0,
     )
 
@@ -276,39 +286,43 @@ function Successful({ whoList, choreInfo, seedStatus }) {
       const whoNum = Number(selectedWho)
       const choreNum = Number(choreRowId)
       const successVal = Number(isSuccess)
-      const existingEntries = findExistingEntries(selectedWho, choreRowId, trackingList)
+      const docId = getTrackingDocId(whoNum, choreNum)
 
-      if (existingEntries.length > 0) {
-        await Promise.all(
-          existingEntries.map((entry) =>
-            setDoc(
-              doc(db, 'Success_Tracking', entry.id),
-              {
-                who: whoNum,
-                chore: choreNum,
-                isSuccess: successVal,
-                isSuccessful: successVal,
-              },
-              { merge: true },
-            ),
-          ),
-        )
-      } else {
-        const snapshot = await getDocs(collection(db, 'Success_Tracking'))
-        const maxRowId = snapshot.docs.reduce((max, entry) => {
-          const data = entry.data()
-          const rowId = data.rowId ?? Number(entry.id) ?? 0
-          return rowId > max ? rowId : max
-        }, 0)
-        const newRowId = maxRowId + 1
+      const snapshot = await getDocs(collection(db, 'Success_Tracking'))
+      const allEntries = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
 
-        await setDoc(doc(db, 'Success_Tracking', String(newRowId)), {
-          rowId: newRowId,
+      const matchingEntries = findExistingEntries(whoNum, choreNum, allEntries)
+      const existingByDocId = allEntries.find((entry) => entry.id === docId)
+
+      let rowId = existingByDocId?.rowId ?? matchingEntries[0]?.rowId
+      if (rowId == null) {
+        rowId =
+          allEntries.reduce((max, entry) => {
+            const entryRowId = entry.rowId ?? Number(entry.id) ?? 0
+            return entryRowId > max ? entryRowId : max
+          }, 0) + 1
+      }
+
+      await setDoc(
+        doc(db, 'Success_Tracking', docId),
+        {
+          rowId,
           who: whoNum,
           chore: choreNum,
           isSuccess: successVal,
           isSuccessful: successVal,
-        })
+        },
+        { merge: true },
+      )
+
+      const duplicateEntries = matchingEntries.filter((entry) => entry.id !== docId)
+      if (duplicateEntries.length > 0) {
+        await Promise.all(
+          duplicateEntries.map((entry) => deleteDoc(doc(db, 'Success_Tracking', entry.id))),
+        )
       }
 
       clearChoreSelection()
@@ -353,7 +367,7 @@ function Successful({ whoList, choreInfo, seedStatus }) {
                     required
                   >
                     <option value="">Select person</option>
-                    {whoList.map((person) => (
+                    {whoFormOptions.map((person) => (
                       <option key={person.rowId} value={person.rowId}>
                         {person.name}
                       </option>
