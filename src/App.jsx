@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
 // import { seedChoresIfEmpty } from './seedChores'
@@ -17,6 +17,7 @@ import CompletedBeth from './pages/CompletedBeth'
 import CompletedRobey from './pages/CompletedRobey'
 import RobeySubcategories from './pages/RobeySubcategories'
 import All from './pages/All'
+import ManageChores from './pages/ManageChores'
 
 const navItems = [
   'Assigned Chores',
@@ -27,6 +28,7 @@ const navItems = [
   'Completed Beth',
   'Completed Robey',
   'Robey Subcategories',
+  'Manage Chores',
 ]
 
 function renderActivePage(activeNav, props) {
@@ -41,6 +43,8 @@ function renderActivePage(activeNav, props) {
       return <AssignedChores {...props} />
     case 'Successful?':
       return <Successful {...props} />
+    case 'Manage Chores':
+      return <ManageChores {...props} />
     case 'Completed Beth':
       return <CompletedBeth />
     case 'Completed Robey':
@@ -55,11 +59,88 @@ function renderActivePage(activeNav, props) {
 function App() {
   const [seedStatus, setSeedStatus] = useState('loading')
   const [choreInfo, setChoreInfo] = useState([])
+  const [choresList, setChoresList] = useState([])
   const [whoList, setWhoList] = useState([])
   const [challengeLevelsList, setChallengeLevelsList] = useState([])
   const [frequencyOfList, setFrequencyOfList] = useState([])
   const [activeNav, setActiveNav] = useState('Assigned Chores')
   const hasLoaded = useRef(false)
+
+  const loadData = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setSeedStatus('loading')
+    }
+
+    try {
+      const [assignedToSnapshot, whoSnapshot, frequencySnapshot, challengeLevelsSnapshot, choresSnapshot] = await Promise.all([
+        getDocs(collection(db, 'Assigned_To')),
+        getDocs(collection(db, 'Who')),
+        getDocs(collection(db, 'Frequency_Of')),
+        getDocs(collection(db, 'Challenge_Levels')),
+        getDocs(collection(db, 'Chores')),
+      ])
+
+      const assignedToData = assignedToSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
+      const whoData = whoSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
+      const frequencyOfData = frequencySnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
+      const challengeLevelsData = challengeLevelsSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
+      const choresData = choresSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
+
+      const whoMap = Object.fromEntries(whoData.map((person) => [person.rowId, person.name]))
+      const challengeMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.challenge]))
+      const pointsMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.points]))
+      const frequencyMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.frequency]))
+      const frequencySortMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.sort]))
+
+      const assignedToMap = Object.fromEntries(
+        assignedToData.map((assignment) => [assignment.choreRowId, assignment.who ?? null]),
+      )
+
+      const joinedChoreInfo = choresData.map((chore) => {
+        const who = assignedToMap[chore.rowId] ?? null
+        const challengeLevelId = chore.challengeLevel
+        const freqId = chore.freqId
+
+        return {
+          choreRowId: chore.rowId,
+          who,
+          name: who != null ? whoMap[who] : null,
+          chore: chore.chore ?? null,
+          challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
+          challengeLevelId: challengeLevelId ?? null,
+          points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
+          frequency: freqId != null ? frequencyMap[freqId] : null,
+          freqId: freqId ?? null,
+          frequencySort: freqId != null ? frequencySortMap[freqId] : null,
+        }
+      })
+
+      setWhoList(whoData.sort((a, b) => a.rowId - b.rowId))
+      setChallengeLevelsList(challengeLevelsData.sort((a, b) => a.rowId - b.rowId))
+      setFrequencyOfList(frequencyOfData.sort((a, b) => a.sort - b.sort))
+      setChoresList(choresData.sort((a, b) => a.rowId - b.rowId))
+      setChoreInfo(joinedChoreInfo)
+      setSeedStatus('ready')
+    } catch (err) {
+      console.error('Failed to load data:', err)
+      setSeedStatus('error')
+    }
+  }, [])
 
   useEffect(() => {
     if (hasLoaded.current) return
@@ -85,90 +166,8 @@ function App() {
     //       successTracking.seeded
     //     setSeedStatus(anySeeded ? 'seeded' : 'ready')
 
-    async function loadData() {
-      try {
-        const [assignedToSnapshot, whoSnapshot, frequencySnapshot, challengeLevelsSnapshot, choresSnapshot] = await Promise.all([
-          getDocs(collection(db, 'Assigned_To')),
-          getDocs(collection(db, 'Who')),
-          getDocs(collection(db, 'Frequency_Of')),
-          getDocs(collection(db, 'Challenge_Levels')),
-          getDocs(collection(db, 'Chores')),
-        ])
-
-        const assignedToData = assignedToSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        const whoData = whoSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        const frequencyOfData = frequencySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        const challengeLevelsData = challengeLevelsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        const choresData = choresSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-
-        console.log('Assigned_To', assignedToData)
-        console.log('Who', whoData)
-        console.log('Frequency_Of', frequencyOfData)
-        console.log('Challenge_Levels', challengeLevelsData)
-        console.log('Chores', choresData)
-
-        const whoMap = Object.fromEntries(whoData.map((person) => [person.rowId, person.name]))
-        const challengeMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.challenge]))
-        const pointsMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.points]))
-        const frequencyMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.frequency]))
-        const frequencySortMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.sort]))
-
-        const assignedToMap = Object.fromEntries(
-          assignedToData.map((assignment) => [assignment.choreRowId, assignment.who ?? null]),
-        )
-
-        const joinedChoreInfo = choresData
-          .map((chore) => {
-            const who = assignedToMap[chore.rowId] ?? null
-            const challengeLevelId = chore.challengeLevel
-            const freqId = chore.freqId
-
-            return {
-              choreRowId: chore.rowId,
-              who,
-              name: who != null ? whoMap[who] : null,
-              chore: chore.chore ?? null,
-              challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
-              challengeLevelId: challengeLevelId ?? null,
-              points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
-              frequency: freqId != null ? frequencyMap[freqId] : null,
-              freqId: freqId ?? null,
-              frequencySort: freqId != null ? frequencySortMap[freqId] : null,
-            }
-          })
-
-        setWhoList(whoData.sort((a, b) => a.rowId - b.rowId))
-        setChallengeLevelsList(challengeLevelsData.sort((a, b) => a.rowId - b.rowId))
-        setFrequencyOfList(frequencyOfData.sort((a, b) => a.sort - b.sort))
-        setChoreInfo(joinedChoreInfo)
-        setSeedStatus('ready')
-
-        joinedChoreInfo.forEach((item) => {
-          console.log(item.choreRowId, item.name, item.chore, item.challenge, item.frequency)
-        })
-      } catch (err) {
-        console.error('Failed to load data:', err)
-        setSeedStatus('error')
-      }
-    }
-
     loadData()
-  }, [])
+  }, [loadData])
 
   return (
     <div className="Chores">
@@ -192,7 +191,16 @@ function App() {
         </nav>
 
         <main className="Chores-Home">
-          {renderActivePage(activeNav, { choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus })}
+          {renderActivePage(activeNav, {
+            choreInfo,
+            setChoreInfo,
+            choresList,
+            whoList,
+            challengeLevelsList,
+            frequencyOfList,
+            seedStatus,
+            reloadData: loadData,
+          })}
         </main>
       </div>
     </div>

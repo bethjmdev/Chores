@@ -102,6 +102,7 @@
 .All-Container,
 .AssignedChores-Container,
 .Successful-Container,
+.ManageChores-Container,
 .CompletedBeth-Container,
 .CompletedRobey-Container,
 .RobeySubcategories-Container {
@@ -115,6 +116,7 @@
 .All-Header,
 .AssignedChores-Header,
 .Successful-Header,
+.ManageChores-Header,
 .CompletedBeth-Header,
 .CompletedRobey-Header,
 .RobeySubcategories-Header {
@@ -126,6 +128,7 @@
 .Levels-Content,
 .All-Content,
 .Successful-Content,
+.ManageChores-Content,
 .CompletedBeth-Content,
 .CompletedRobey-Content,
 .RobeySubcategories-Content {
@@ -286,6 +289,12 @@
   color: var(--ink);
 }
 
+.Successful-Display-Hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .Successful-Failures-List {
   display: flex;
   flex-wrap: wrap;
@@ -318,6 +327,18 @@
 
 .Successful-Failures-Who-Chores li {
   margin-bottom: 0.25rem;
+}
+
+.Successful-Failures-Who-ChoreItem {
+  cursor: pointer;
+}
+
+.Successful-Failures-Who-ChoreItem:hover {
+  color: #047857;
+}
+
+.Successful-Failures-Who-ChoreItem-Updating {
+  opacity: 0.5;
 }
 
 .Successful-ChoreHover {
@@ -390,6 +411,142 @@
 .Successful-Empty {
   margin: 0;
   color: var(--muted);
+}
+
+.ManageChores-Form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.ManageChores-Form-Title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.ManageChores-Form-Grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.ManageChores-Form-Field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ManageChores-Form-Label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ManageChores-Form-Input,
+.ManageChores-Form-Select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.ManageChores-Form-Input:focus,
+.ManageChores-Form-Select:focus {
+  border-color: rgba(139, 92, 246, 0.35);
+  outline: none;
+}
+
+.ManageChores-Form-Actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ManageChores-EditForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.ManageChores-Button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ManageChores-Button:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.ManageChores-Button-Primary {
+  border: none;
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  color: #fff;
+}
+
+.ManageChores-Button-Delete {
+  border-color: rgba(236, 72, 153, 0.3);
+  color: #be185d;
+}
+
+.ManageChores-Table-Wrap {
+  overflow-x: auto;
+}
+
+.ManageChores-Table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.ManageChores-Table th,
+.ManageChores-Table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  vertical-align: top;
+}
+
+.ManageChores-Table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.ManageChores-Table tbody tr:hover {
+  background: rgba(139, 92, 246, 0.03);
+}
+
+.ManageChores-Table-Row-Editing {
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.ManageChores-Table-Actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ManageChores-Loading {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ManageChores-Error {
+  margin: 0;
+  color: #be185d;
 }
 
 .Points-List {

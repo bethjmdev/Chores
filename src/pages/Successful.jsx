@@ -24,6 +24,15 @@ function getIsSuccess(entry) {
   return null
 }
 
+function findExistingEntries(whoRowId, choreRowId, entries) {
+  const whoNum = Number(whoRowId)
+  const choreNum = Number(choreRowId)
+
+  return entries.filter(
+    (entry) => getWhoRowId(entry) === whoNum && getChoreRowId(entry) === choreNum,
+  )
+}
+
 function ChoreHover({ choreRowId, choreName, choreDetailsMap, children }) {
   const details = choreDetailsMap[choreRowId]
 
@@ -54,6 +63,7 @@ function Successful({ whoList, choreInfo, seedStatus }) {
   const [trackingList, setTrackingList] = useState([])
   const [trackingStatus, setTrackingStatus] = useState('loading')
   const [submitStatus, setSubmitStatus] = useState('idle')
+  const [updatingFailureKey, setUpdatingFailureKey] = useState(null)
 
   const whoMap = useMemo(
     () => Object.fromEntries(whoList.map((person) => [person.rowId, person.name])),
@@ -210,6 +220,47 @@ function Successful({ whoList, choreInfo, seedStatus }) {
     setSelectedWho(value)
   }
 
+  async function handleMarkSuccessful(whoRowId, choreRowId) {
+    const failureKey = `${whoRowId}-${choreRowId}`
+    if (updatingFailureKey === failureKey) return
+
+    const matchingEntries = trackingList.filter(
+      (entry) =>
+        getWhoRowId(entry) === whoRowId &&
+        getChoreRowId(entry) === choreRowId &&
+        getIsSuccess(entry) === 0,
+    )
+
+    if (matchingEntries.length === 0) return
+
+    setUpdatingFailureKey(failureKey)
+
+    try {
+      await Promise.all(
+        matchingEntries.map((entry) =>
+          setDoc(
+            doc(db, 'Success_Tracking', entry.id),
+            { isSuccess: 1, isSuccessful: 1 },
+            { merge: true },
+          ),
+        ),
+      )
+
+      setTrackingList((prev) =>
+        prev.map((entry) => {
+          const isMatch = matchingEntries.some((match) => match.id === entry.id)
+          if (!isMatch) return entry
+          return { ...entry, isSuccess: 1, isSuccessful: 1 }
+        }),
+      )
+    } catch (err) {
+      console.error('Failed to mark chore successful:', err)
+      await loadTracking()
+    } finally {
+      setUpdatingFailureKey(null)
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
 
@@ -222,20 +273,43 @@ function Successful({ whoList, choreInfo, seedStatus }) {
     setSubmitStatus('saving')
 
     try {
-      const snapshot = await getDocs(collection(db, 'Success_Tracking'))
-      const maxRowId = snapshot.docs.reduce((max, entry) => {
-        const data = entry.data()
-        const rowId = data.rowId ?? Number(entry.id) ?? 0
-        return rowId > max ? rowId : max
-      }, 0)
-      const newRowId = maxRowId + 1
+      const whoNum = Number(selectedWho)
+      const choreNum = Number(choreRowId)
+      const successVal = Number(isSuccess)
+      const existingEntries = findExistingEntries(selectedWho, choreRowId, trackingList)
 
-      await setDoc(doc(db, 'Success_Tracking', String(newRowId)), {
-        rowId: newRowId,
-        who: Number(selectedWho),
-        chore: Number(choreRowId),
-        isSuccess: Number(isSuccess),
-      })
+      if (existingEntries.length > 0) {
+        await Promise.all(
+          existingEntries.map((entry) =>
+            setDoc(
+              doc(db, 'Success_Tracking', entry.id),
+              {
+                who: whoNum,
+                chore: choreNum,
+                isSuccess: successVal,
+                isSuccessful: successVal,
+              },
+              { merge: true },
+            ),
+          ),
+        )
+      } else {
+        const snapshot = await getDocs(collection(db, 'Success_Tracking'))
+        const maxRowId = snapshot.docs.reduce((max, entry) => {
+          const data = entry.data()
+          const rowId = data.rowId ?? Number(entry.id) ?? 0
+          return rowId > max ? rowId : max
+        }, 0)
+        const newRowId = maxRowId + 1
+
+        await setDoc(doc(db, 'Success_Tracking', String(newRowId)), {
+          rowId: newRowId,
+          who: whoNum,
+          chore: choreNum,
+          isSuccess: successVal,
+          isSuccessful: successVal,
+        })
+      }
 
       clearChoreSelection()
       setIsSuccess('')
@@ -375,7 +449,8 @@ function Successful({ whoList, choreInfo, seedStatus }) {
               </form>
 
               <div className="Successful-Display-Section">
-                <h3 className="Successful-Display-Title">Failures (No)</h3>
+                <h3 className="Successful-Display-Title">Not good at...</h3>
+                <p className="Successful-Display-Hint">Double-click a chore to mark it successful.</p>
 
                 {trackingStatus === 'loading' && (
                   <p className="Successful-Loading">Loading logs...</p>
@@ -395,7 +470,11 @@ function Successful({ whoList, choreInfo, seedStatus }) {
                         <h4 className="Successful-Failures-Who-Name">{person.name}</h4>
                         <ul className="Successful-Failures-Who-Chores">
                           {failuresByWho[person.rowId].map((failure) => (
-                            <li key={failure.choreRowId}>
+                            <li
+                              key={failure.choreRowId}
+                              className={`Successful-Failures-Who-ChoreItem${updatingFailureKey === `${person.rowId}-${failure.choreRowId}` ? ' Successful-Failures-Who-ChoreItem-Updating' : ''}`}
+                              onDoubleClick={() => handleMarkSuccessful(person.rowId, failure.choreRowId)}
+                            >
                               <ChoreHover
                                 choreRowId={failure.choreRowId}
                                 choreName={failure.choreName}
