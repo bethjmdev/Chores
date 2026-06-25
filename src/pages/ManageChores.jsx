@@ -21,6 +21,9 @@ function ManageChores({
   const [editingRowId, setEditingRowId] = useState(null)
   const [editForm, setEditForm] = useState(emptyForm)
   const [saveStatus, setSaveStatus] = useState('idle')
+  const [choreInput, setChoreInput] = useState('')
+  const [filterChoreRowId, setFilterChoreRowId] = useState('')
+  const [choreListOpen, setChoreListOpen] = useState(false)
 
   const frequencyMap = useMemo(
     () => Object.fromEntries(frequencyOfList.map((freq) => [freq.rowId, freq.frequency])),
@@ -36,6 +39,56 @@ function ManageChores({
     () => [...choresList].sort((a, b) => a.rowId - b.rowId),
     [choresList],
   )
+
+  const choreSearchOptions = useMemo(
+    () => [...choresList].sort((a, b) => (a.chore || '').localeCompare(b.chore || '')),
+    [choresList],
+  )
+
+  const filteredChoreSearchOptions = useMemo(() => {
+    const query = choreInput.trim().toLowerCase()
+    if (!query) return choreSearchOptions
+
+    return choreSearchOptions.filter((chore) =>
+      (chore.chore || '').toLowerCase().includes(query),
+    )
+  }, [choreSearchOptions, choreInput])
+
+  const filteredChores = useMemo(() => {
+    let chores = sortedChores
+
+    if (filterChoreRowId) {
+      chores = chores.filter((chore) => chore.rowId === Number(filterChoreRowId))
+    } else if (choreInput.trim()) {
+      const query = choreInput.trim().toLowerCase()
+      chores = chores.filter((chore) => (chore.chore || '').toLowerCase().includes(query))
+    }
+
+    return chores
+  }, [sortedChores, filterChoreRowId, choreInput])
+
+  function handleChoreInputChange(value) {
+    setChoreInput(value)
+    setChoreListOpen(true)
+
+    const match = choreSearchOptions.find(
+      (chore) => (chore.chore || '').toLowerCase() === value.trim().toLowerCase(),
+    )
+
+    setFilterChoreRowId(match ? String(match.rowId) : '')
+  }
+
+  function handleChorePick(chore) {
+    setChoreInput(chore.chore)
+    setFilterChoreRowId(String(chore.rowId))
+    setChoreListOpen(false)
+  }
+
+  function clearChoreSearch() {
+    setChoreInput('')
+    setFilterChoreRowId('')
+    setChoreListOpen(false)
+  }
 
   function startEdit(chore) {
     setEditingRowId(chore.rowId)
@@ -256,6 +309,50 @@ function ManageChores({
                 </div>
               </form>
 
+              <div className="ManageChores-SearchBar">
+                <label className="ManageChores-SearchLabel" htmlFor="manage-chore-search">
+                  Chore
+                </label>
+                <div className="ManageChores-Combobox">
+                  <input
+                    id="manage-chore-search"
+                    type="text"
+                    className="ManageChores-Combobox-Input"
+                    value={choreInput}
+                    onChange={(e) => handleChoreInputChange(e.target.value)}
+                    onFocus={() => setChoreListOpen(true)}
+                    onBlur={() => {
+                      setTimeout(() => setChoreListOpen(false), 150)
+                    }}
+                    placeholder="Type or select a chore"
+                    autoComplete="off"
+                  />
+                  {choreListOpen && filteredChoreSearchOptions.length > 0 && (
+                    <ul className="ManageChores-Combobox-List">
+                      {filteredChoreSearchOptions.map((chore) => (
+                        <li key={chore.rowId}>
+                          <button
+                            type="button"
+                            className="ManageChores-Combobox-Option"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleChorePick(chore)}
+                          >
+                            {chore.chore}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="ManageChores-SearchButton-Clear"
+                  onClick={clearChoreSearch}
+                >
+                  Clear
+                </button>
+              </div>
+
               <div className="ManageChores-Table-Wrap">
                 <table className="ManageChores-Table">
                   <thead>
@@ -269,7 +366,7 @@ function ManageChores({
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedChores.map((chore) => {
+                    {filteredChores.map((chore) => {
                       const isEditing = editingRowId === chore.rowId
 
                       if (isEditing) {

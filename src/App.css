@@ -500,6 +500,98 @@
   color: #be185d;
 }
 
+.ManageChores-SearchBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.65));
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.ManageChores-SearchLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ManageChores-Combobox {
+  position: relative;
+  min-width: 12rem;
+}
+
+.ManageChores-Combobox-Input {
+  width: 100%;
+  min-width: 12rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.ManageChores-Combobox-Input:hover,
+.ManageChores-Combobox-Input:focus {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  outline: none;
+}
+
+.ManageChores-Combobox-List {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.12);
+}
+
+.ManageChores-Combobox-Option {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ManageChores-Combobox-Option:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.ManageChores-SearchButton-Clear {
+  margin-left: auto;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(236, 72, 153, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #be185d;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ManageChores-SearchButton-Clear:hover {
+  border-color: rgba(236, 72, 153, 0.45);
+  background: rgba(236, 72, 153, 0.08);
+}
+
 .ManageChores-Table-Wrap {
   overflow-x: auto;
 }
@@ -837,6 +929,12 @@
 .All-ChoreName {
   font-weight: 600;
   color: var(--ink);
+}
+
+.All-ChoreNotes {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .All-ListItem-Tags {
@@ -1222,6 +1320,12 @@
   line-height: 1.4;
 }
 
+.AssignedChores-ChoreNotes {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .AssignedChores-Tag {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
@@ -1260,6 +1364,56 @@
 .AssignedChores-Error {
   background: rgba(236, 72, 153, 0.08);
   color: #be185d;
+}
+
+.AssignedChores-Warning-Overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(30, 27, 46, 0.35);
+}
+
+.AssignedChores-Warning {
+  width: min(100%, 24rem);
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92));
+  border: 1px solid rgba(236, 72, 153, 0.25);
+  box-shadow: 0 16px 40px rgba(30, 27, 46, 0.18);
+}
+
+.AssignedChores-Warning-Title {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  color: #be185d;
+}
+
+.AssignedChores-Warning-Text {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.AssignedChores-Warning-Note {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.AssignedChores-Warning-Button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 @media (max-width: 640px) {

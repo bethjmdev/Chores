@@ -214,6 +214,7 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
                   >
                     <div className="All-ListItem-Main">
                       <span className="All-ChoreName">{item.chore}</span>
+                      {item.notes && <span className="All-ChoreNotes">{item.notes}</span>}
                       <div className="All-ListItem-Tags">
                         {item.challenge && (
                           <span

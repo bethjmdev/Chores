@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
 import { sortChoresByFrequency } from '../utils/sortChores'
@@ -11,9 +11,43 @@ function getSectionKey(whoRowId) {
   return whoRowId ?? 'unassigned'
 }
 
+function getTrackingWhoRowId(entry) {
+  return entry.who ?? entry.whoRowid ?? null
+}
+
+function getTrackingChoreRowId(entry) {
+  return entry.chore ?? entry.choreRowid ?? null
+}
+
+function getTrackingIsSuccess(entry) {
+  if (entry.isSuccess != null) {
+    return Number(entry.isSuccess)
+  }
+
+  if (entry.isSuccessful != null) {
+    return Number(entry.isSuccessful)
+  }
+
+  return null
+}
+
+async function hasFailureInTracking(whoRowId, choreRowId) {
+  const snapshot = await getDocs(collection(db, 'Success_Tracking'))
+
+  return snapshot.docs.some((docSnap) => {
+    const data = docSnap.data()
+    return (
+      getTrackingWhoRowId(data) === whoRowId &&
+      getTrackingChoreRowId(data) === choreRowId &&
+      getTrackingIsSuccess(data) === 0
+    )
+  })
+}
+
 function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus }) {
   const [draggedChoreRowId, setDraggedChoreRowId] = useState(null)
   const [dragOverWho, setDragOverWho] = useState(null)
+  const [assignWarning, setAssignWarning] = useState(null)
 
   const sectionKeys = useMemo(
     () => whoList.map((person) => getSectionKey(person.rowId)).concat(['unassigned']),
@@ -104,6 +138,10 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
       return
     }
 
+    const shouldWarn =
+      targetWhoRowId != null &&
+      (await hasFailureInTracking(targetWhoRowId, choreRowId))
+
     setChoreInfo((prev) =>
       prev.map((item) =>
         item.choreRowId === choreRowId
@@ -120,6 +158,13 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
       await updateDoc(doc(db, 'Assigned_To', String(choreRowId)), {
         who: targetWhoRowId,
       })
+
+      if (shouldWarn) {
+        setAssignWarning({
+          choreName: currentItem.chore || `Chore ${choreRowId}`,
+          personName: whoMap[targetWhoRowId],
+        })
+      }
     } catch (err) {
       console.error('Failed to update assignment:', err)
       setChoreInfo((prev) =>
@@ -219,6 +264,9 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
                           }}
                         >
                           <span className="AssignedChores-ChoreName">{item.chore}</span>
+                          {item.notes && (
+                            <span className="AssignedChores-ChoreNotes">{item.notes}</span>
+                          )}
                           {item.challenge && (
                             <span
                               className="AssignedChores-Tag AssignedChores-Tag-Challenge"
@@ -245,6 +293,26 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
           )}
         </section>
       </div>
+
+      {assignWarning && (
+        <div className="AssignedChores-Warning-Overlay">
+          <div className="AssignedChores-Warning">
+            <h3 className="AssignedChores-Warning-Title">Success_Tracking warning</h3>
+            <p className="AssignedChores-Warning-Text">
+              <strong>{assignWarning.choreName}</strong> is marked unsuccessful (0) for{' '}
+              <strong>{assignWarning.personName}</strong> in Success_Tracking.
+            </p>
+            <p className="AssignedChores-Warning-Note">The chore was still assigned.</p>
+            <button
+              type="button"
+              className="AssignedChores-Warning-Button"
+              onClick={() => setAssignWarning(null)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

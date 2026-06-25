@@ -121,6 +121,7 @@ function App() {
           who,
           name: who != null ? whoMap[who] : null,
           chore: chore.chore ?? null,
+          notes: chore.notes?.trim() ? chore.notes.trim() : null,
           challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
           challengeLevelId: challengeLevelId ?? null,
           points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
