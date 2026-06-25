@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
-import { sortChoresByPointsThenFrequency } from '../utils/sortChores'
+import { sortChoresByFrequency } from '../utils/sortChores'
 
 function getSectionKey(whoRowId) {
   return whoRowId ?? 'unassigned'
@@ -78,7 +78,7 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
       return item.who === whoRowId
     })
 
-    return sortChoresByPointsThenFrequency(sectionChores)
+    return sortChoresByFrequency(sectionChores)
   }
 
   async function handleDrop(targetWhoRowId) {

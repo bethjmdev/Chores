@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getChallengeLevelStyle } from '../utils/challengeLevelColors'
+import { sortChoresByFrequency } from '../utils/sortChores'
 
 function getPersonKey(rowId) {
   return String(rowId)
@@ -46,9 +47,11 @@ function Levels({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
   }
 
   function getChoresForPersonAndLevel(whoRowId, challengeName) {
-    return choreInfo.filter(
+    const levelChores = choreInfo.filter(
       (item) => item.who === whoRowId && item.challenge === challengeName,
     )
+
+    return sortChoresByFrequency(levelChores)
   }
 
   return (
