@@ -8,7 +8,8 @@
   },
   "scripts": {
     "serve": "firebase emulators:start --only functions",
-    "deploy": "firebase deploy --only functions"
+    "deploy": "firebase deploy --only functions",
+    "seed:chores": "node scripts/seedChores.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
