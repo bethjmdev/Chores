@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { deleteDoc, doc, setDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
 const emptyForm = {
@@ -199,8 +199,16 @@ function ManageChores({
     setSaveStatus('saving')
 
     try {
-      await deleteDoc(doc(db, 'Chores', String(chore.rowId)))
-      await deleteDoc(doc(db, 'Assigned_To', String(chore.rowId))).catch(() => {})
+      const subcategorySnapshot = await getDocs(collection(db, 'RobeySubCategory'))
+      const subcategoryDeletes = subcategorySnapshot.docs
+        .filter((docSnap) => docSnap.data().choreRowId === chore.rowId)
+        .map((docSnap) => deleteDoc(docSnap.ref))
+
+      await Promise.all([
+        deleteDoc(doc(db, 'Chores', String(chore.rowId))),
+        deleteDoc(doc(db, 'Assigned_To', String(chore.rowId))).catch(() => {}),
+        ...subcategoryDeletes,
+      ])
 
       if (editingRowId === chore.rowId) {
         cancelEdit()

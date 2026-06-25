@@ -44,7 +44,7 @@ async function hasFailureInTracking(whoRowId, choreRowId) {
   })
 }
 
-function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus }) {
+function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus, reloadData }) {
   const [draggedChoreRowId, setDraggedChoreRowId] = useState(null)
   const [dragOverWho, setDragOverWho] = useState(null)
   const [assignWarning, setAssignWarning] = useState(null)
@@ -164,6 +164,10 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
           choreName: currentItem.chore || `Chore ${choreRowId}`,
           personName: whoMap[targetWhoRowId],
         })
+      }
+
+      if (reloadData) {
+        await reloadData({ silent: true })
       }
     } catch (err) {
       console.error('Failed to update assignment:', err)

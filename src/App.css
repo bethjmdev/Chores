@@ -105,7 +105,8 @@
 .ManageChores-Container,
 .CompletedBeth-Container,
 .CompletedRobey-Container,
-.RobeySubcategories-Container {
+.RobeySubcategories-Container,
+.RobeyQueue-Container {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -119,7 +120,8 @@
 .ManageChores-Header,
 .CompletedBeth-Header,
 .CompletedRobey-Header,
-.RobeySubcategories-Header {
+.RobeySubcategories-Header,
+.RobeyQueue-Header {
   padding-bottom: 1rem;
   border-bottom: 1px solid rgba(139, 92, 246, 0.12);
 }
@@ -131,7 +133,8 @@
 .ManageChores-Content,
 .CompletedBeth-Content,
 .CompletedRobey-Content,
-.RobeySubcategories-Content {
+.RobeySubcategories-Content,
+.RobeyQueue-Content {
   padding: 1.25rem;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));
@@ -641,6 +644,632 @@
 .ManageChores-Error {
   margin: 0;
   color: #be185d;
+}
+
+.RobeySubcategories-Form {
+  display: grid;
+  gap: 1rem;
+  max-width: 40rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.RobeySubcategories-Form-Title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.RobeySubcategories-Form-Grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.RobeySubcategories-Form-Field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.RobeySubcategories-Form-Label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-Form-Input,
+.RobeySubcategories-Form-Select {
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: #fff;
+  font-size: 0.95rem;
+}
+
+.RobeySubcategories-Form-Input:focus,
+.RobeySubcategories-Form-Select:focus {
+  outline: 2px solid rgba(139, 92, 246, 0.35);
+  border-color: rgba(139, 92, 246, 0.45);
+}
+
+.RobeySubcategories-Form-Actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.RobeySubcategories-Button {
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.RobeySubcategories-Button:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.RobeySubcategories-Button-Primary {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.RobeySubcategories-Button-Delete {
+  color: #be185d;
+  border-color: rgba(190, 24, 93, 0.25);
+}
+
+.RobeySubcategories-Groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.RobeySubcategories-Group {
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.RobeySubcategories-Group-Header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.RobeySubcategories-Group-Title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.RobeySubcategories-Group-Frequency {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-Group-Note {
+  font-size: 0.8rem;
+  color: #b45309;
+}
+
+.RobeySubcategories-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.RobeySubcategories-ListItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.RobeySubcategories-ListItem-Main {
+  display: grid;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 10rem;
+}
+
+.RobeySubcategories-CheckLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1;
+  min-width: 10rem;
+  cursor: pointer;
+}
+
+.RobeySubcategories-Checkbox {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #8b5cf6;
+}
+
+.RobeySubcategories-Label {
+  font-size: 0.95rem;
+}
+
+.RobeySubcategories-EditInput {
+  flex: 1;
+  min-width: 8rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.RobeySubcategories-EditSelect {
+  width: 100%;
+  max-width: 12rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: #fff;
+}
+
+.RobeySubcategories-QueueDay {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-PreferredTime {
+  font-size: 0.8rem;
+  color: #4a6fa5;
+}
+
+.RobeySubcategories-TimeInput {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.RobeySubcategories-ChoreTimes {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.04);
+}
+
+.RobeySubcategories-ChoreTimes-Collapsed {
+  padding-bottom: 0.75rem;
+}
+
+.RobeySubcategories-ChoreTimes-Header {
+  margin: 0 0 0.35rem;
+}
+
+.RobeySubcategories-ChoreTimes-Collapsed .RobeySubcategories-ChoreTimes-Header {
+  margin-bottom: 0;
+}
+
+.RobeySubcategories-ChoreTimes-Toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.RobeySubcategories-ChoreTimes-Toggle:hover .RobeySubcategories-ChoreTimes-Title {
+  color: #6d28d9;
+}
+
+.RobeySubcategories-ChoreTimes-Toggle-Icon {
+  width: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-ChoreTimes-Title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.RobeySubcategories-ChoreTimes-Count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-ChoreTimes-Note {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.RobeySubcategories-ChoreTimes-Table {
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.RobeySubcategories-ChoreTimes-Table-Header {
+  display: grid;
+  grid-template-columns: 1fr minmax(11rem, 14rem);
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.15);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.RobeySubcategories-ChoreTimes-Table-Header-Label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.RobeySubcategories-ChoreTimes-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.RobeySubcategories-ChoreTimes-Item {
+  display: grid;
+  grid-template-columns: 1fr minmax(11rem, 14rem);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.RobeySubcategories-ChoreTimes-Item:last-child {
+  border-bottom: none;
+}
+
+.RobeySubcategories-ChoreTimes-Item:nth-child(even) {
+  background: rgba(139, 92, 246, 0.03);
+}
+
+.RobeySubcategories-ChoreTimes-Label {
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.RobeySubcategories-ChoreTimes-Select {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.RobeySubcategories-ChoreTimes-Select:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.12);
+}
+
+.RobeySubcategories-ListItem-Actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.RobeySubcategories-Loading,
+.RobeySubcategories-Empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.RobeySubcategories-Error {
+  margin: 0;
+  color: #be185d;
+}
+
+.RobeyQueue-Days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.RobeyQueue-Filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.65));
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.RobeyQueue-Filter-Label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-right: 0.25rem;
+}
+
+.RobeyQueue-Filter-Button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.RobeyQueue-Filter-Button:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.RobeyQueue-Filter-Button-Active {
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.22);
+}
+
+.RobeyQueue-Filter-Button-Clear {
+  margin-left: auto;
+  color: var(--muted);
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+.RobeyQueue-Filter-Button-Clear:hover {
+  color: var(--ink);
+}
+
+.RobeyQueue-Day {
+  min-width: 10rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.RobeyQueue-Day-DragOver {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.RobeyQueue-Day-Title {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+}
+
+.RobeyQueue-Day-Count {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.RobeyQueue-Day-Empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.RobeyQueue-Day-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.RobeyQueue-Day-ListItem {
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  cursor: grab;
+}
+
+.RobeyQueue-CheckLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  cursor: pointer;
+}
+
+.RobeyQueue-Checkbox {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.1rem;
+  accent-color: #8b5cf6;
+  flex-shrink: 0;
+}
+
+.RobeyQueue-CheckLabel-Content {
+  flex: 1;
+  min-width: 0;
+}
+
+.RobeyQueue-Day-ListItem-Dragging {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.RobeyQueue-AsNeeded .RobeyQueue-Day-ListItem {
+  cursor: default;
+}
+
+.RobeyQueue-Day-ListItem-Done {
+  opacity: 0.65;
+  border-style: dashed;
+}
+
+.RobeyQueue-Day-ListItem-Label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.RobeyQueue-Day-ListItem-FrequencyGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.RobeyQueue-Day-ListItem-TimeIcon {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.RobeyQueue-Day-ListItem-ParentInline {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.RobeyQueue-Day-ListItem-Meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.RobeyQueue-Day-ListItem-Frequency {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.RobeyQueue-Day-ListItem-QueueDay {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.RobeyQueue-Loading,
+.RobeyQueue-Empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.RobeyQueue-Error {
+  margin: 0;
+  color: #be185d;
+}
+
+.RobeyQueue-AsNeeded {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+}
+
+.RobeyQueue-CatchUpBar {
+  margin-bottom: 1rem;
+}
+
+.RobeyQueue-CatchUp-Button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(190, 24, 93, 0.25);
+  background: rgba(190, 24, 93, 0.08);
+  color: #9d174d;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.RobeyQueue-CatchUp-Button-Active {
+  background: rgba(190, 24, 93, 0.15);
+  border-color: rgba(190, 24, 93, 0.4);
+}
+
+.RobeyQueue-CatchUp-Count {
+  min-width: 1.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(190, 24, 93, 0.15);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.RobeyQueue-CatchUp {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(190, 24, 93, 0.2);
+}
+
+.RobeyQueue-CatchUp-Title {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.RobeyQueue-CatchUp-Note {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.RobeyQueue-CatchUp-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.RobeyQueue-Day-ListItem-Missed {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(190, 24, 93, 0.12);
+  color: #9d174d;
+}
+
+.RobeyQueue-AsNeeded-Title {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.RobeyQueue-AsNeeded-Count {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.RobeyQueue-AsNeeded-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .Points-List {
@@ -1486,7 +2115,8 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
-  .ManageChores-Form-Grid {
+  .ManageChores-Form-Grid,
+  .RobeySubcategories-Form-Grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1496,6 +2126,10 @@
 
   .Successful-Failures-Who {
     flex: 1 1 14rem;
+  }
+
+  .RobeyQueue-Days {
+    grid-template-columns: repeat(3, minmax(10rem, 1fr));
   }
 }
 
@@ -1514,7 +2148,12 @@
     margin-left: 0;
   }
 
-  .ManageChores-Form-Grid {
+  .ManageChores-Form-Grid,
+  .RobeySubcategories-Form-Grid {
+    grid-template-columns: 1fr;
+  }
+
+  .RobeyQueue-Days {
     grid-template-columns: 1fr;
   }
 }

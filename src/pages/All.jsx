@@ -5,7 +5,7 @@ import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeL
 import { sortChoresByPointsThenFrequency } from '../utils/sortChores'
 import { useDoubleTap } from '../utils/useDoubleTap'
 
-function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus }) {
+function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus, reloadData }) {
   const [editingChoreRowId, setEditingChoreRowId] = useState(null)
   const [filterChallenge, setFilterChallenge] = useState('')
   const [filterFrequency, setFilterFrequency] = useState('')
@@ -111,6 +111,10 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
         { who: whoRowId, choreRowId },
         { merge: true },
       )
+
+      if (reloadData) {
+        await reloadData({ silent: true })
+      }
     } catch (err) {
       console.error('Failed to update assignment:', err)
       setChoreInfo((prev) =>
