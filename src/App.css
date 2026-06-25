@@ -132,10 +132,148 @@
   border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
+.Points-List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.Points-ListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.Points-ListItem-Info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.Points-Name {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.Points-ChoreCount {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.Points-Total {
+  min-width: 3rem;
+  text-align: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 124, 255, 0.15), rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.Points-GrandTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(79, 124, 255, 0.1), rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+  color: var(--ink);
+}
+
+.Points-GrandTotal strong {
+  font-size: 1.25rem;
+}
+
+.Points-Loading {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(79, 124, 255, 0.08);
+  color: #3b5ccc;
+}
+
+.Points-Error {
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(236, 72, 153, 0.08);
+  color: #be185d;
+}
+
 .AssignedChores-Content {
   padding: 0;
   border: none;
   background: transparent;
+}
+
+.AssignedChores-Filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.65));
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.AssignedChores-Filter-Label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-right: 0.25rem;
+}
+
+.AssignedChores-Filter-Button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.AssignedChores-Filter-Button:hover {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.AssignedChores-Filter-Button-Active {
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.22);
+}
+
+.AssignedChores-Filter-Button-Clear {
+  margin-left: auto;
+  border-color: rgba(236, 72, 153, 0.25);
+  color: #be185d;
+}
+
+.AssignedChores-Filter-Button-Clear:hover {
+  border-color: rgba(236, 72, 153, 0.45);
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.AssignedChores-Empty {
+  margin: 0;
+  padding: 1.25rem;
+  border-radius: 16px;
+  text-align: center;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(139, 92, 246, 0.2);
 }
 
 .AssignedChores-Columns {
@@ -165,12 +303,26 @@
 
 .AssignedChores-Column-Header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 0.85rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.AssignedChores-Column-Stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.AssignedChores-Column-Points {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 124, 255, 0.15), rgba(236, 72, 153, 0.15));
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .AssignedChores-Column-Title {
@@ -248,6 +400,11 @@
 .AssignedChores-Tag-Frequency {
   background: rgba(236, 72, 153, 0.12);
   color: #be185d;
+}
+
+.AssignedChores-Tag-Points {
+  background: rgba(79, 124, 255, 0.12);
+  color: #3b5ccc;
 }
 
 .AssignedChores-Loading,

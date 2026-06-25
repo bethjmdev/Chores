@@ -30,7 +30,7 @@ const navItems = [
 function renderActivePage(activeNav, props) {
   switch (activeNav) {
     case 'Points':
-      return <Points />
+      return <Points {...props} />
     case 'Levels':
       return <Levels />
     case 'Assigned Chores':
@@ -119,6 +119,7 @@ function App() {
         const whoMap = Object.fromEntries(whoData.map((person) => [person.rowId, person.name]))
         const choreMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.chore]))
         const challengeMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.challenge]))
+        const pointsMap = Object.fromEntries(challengeLevelsData.map((level) => [level.rowId, level.points]))
         const frequencyMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.frequency]))
         const choreChallengeLevelMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.challengeLevel]))
         const choreFreqIdMap = Object.fromEntries(choresData.map((chore) => [chore.rowId, chore.freqId]))
@@ -133,6 +134,7 @@ function App() {
             name: assignment.who != null ? whoMap[assignment.who] : null,
             chore: choreMap[assignment.choreRowId] ?? null,
             challenge: challengeLevelId != null ? challengeMap[challengeLevelId] : null,
+            points: challengeLevelId != null ? pointsMap[challengeLevelId] : 0,
             frequency: freqId != null ? frequencyMap[freqId] : null,
           }
         })
