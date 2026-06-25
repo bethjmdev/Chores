@@ -8,6 +8,9 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
   const [editingChoreRowId, setEditingChoreRowId] = useState(null)
   const [filterChallenge, setFilterChallenge] = useState('')
   const [filterFrequency, setFilterFrequency] = useState('')
+  const [choreInput, setChoreInput] = useState('')
+  const [filterChoreRowId, setFilterChoreRowId] = useState('')
+  const [choreListOpen, setChoreListOpen] = useState(false)
 
   const whoMap = useMemo(
     () => Object.fromEntries(whoList.map((person) => [person.rowId, person.name])),
@@ -18,6 +21,37 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
     () => getChallengeColorMap(challengeLevelsList),
     [challengeLevelsList],
   )
+
+  const choreSearchOptions = useMemo(
+    () => [...choreInfo].sort((a, b) => (a.chore || '').localeCompare(b.chore || '')),
+    [choreInfo],
+  )
+
+  const filteredChoreSearchOptions = useMemo(() => {
+    const query = choreInput.trim().toLowerCase()
+    if (!query) return choreSearchOptions
+
+    return choreSearchOptions.filter((item) =>
+      (item.chore || '').toLowerCase().includes(query),
+    )
+  }, [choreSearchOptions, choreInput])
+
+  function handleChoreInputChange(value) {
+    setChoreInput(value)
+    setChoreListOpen(true)
+
+    const match = choreSearchOptions.find(
+      (item) => (item.chore || '').toLowerCase() === value.trim().toLowerCase(),
+    )
+
+    setFilterChoreRowId(match ? String(match.choreRowId) : '')
+  }
+
+  function handleChorePick(item) {
+    setChoreInput(item.chore)
+    setFilterChoreRowId(String(item.choreRowId))
+    setChoreListOpen(false)
+  }
 
   const sortedChores = useMemo(() => {
     let chores = choreInfo
@@ -32,12 +66,22 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
       chores = chores.filter((item) => item.freqId === freqId)
     }
 
+    if (filterChoreRowId) {
+      chores = chores.filter((item) => item.choreRowId === Number(filterChoreRowId))
+    } else if (choreInput.trim()) {
+      const query = choreInput.trim().toLowerCase()
+      chores = chores.filter((item) => (item.chore || '').toLowerCase().includes(query))
+    }
+
     return sortChoresByPointsThenFrequency(chores)
-  }, [choreInfo, filterChallenge, filterFrequency])
+  }, [choreInfo, filterChallenge, filterFrequency, filterChoreRowId, choreInput])
 
   function handleClearFilters() {
     setFilterChallenge('')
     setFilterFrequency('')
+    setChoreInput('')
+    setFilterChoreRowId('')
+    setChoreListOpen(false)
   }
 
   async function handleReassign(choreRowId, whoValue) {
@@ -118,6 +162,39 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
                     </option>
                   ))}
                 </select>
+
+                <label className="All-SortLabel" htmlFor="all-chore-search">Chore</label>
+                <div className="All-Combobox">
+                  <input
+                    id="all-chore-search"
+                    type="text"
+                    className="All-Combobox-Input"
+                    value={choreInput}
+                    onChange={(e) => handleChoreInputChange(e.target.value)}
+                    onFocus={() => setChoreListOpen(true)}
+                    onBlur={() => {
+                      setTimeout(() => setChoreListOpen(false), 150)
+                    }}
+                    placeholder="Type or select a chore"
+                    autoComplete="off"
+                  />
+                  {choreListOpen && filteredChoreSearchOptions.length > 0 && (
+                    <ul className="All-Combobox-List">
+                      {filteredChoreSearchOptions.map((item) => (
+                        <li key={item.choreRowId}>
+                          <button
+                            type="button"
+                            className="All-Combobox-Option"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleChorePick(item)}
+                          >
+                            {item.chore}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
                 <button
                   type="button"

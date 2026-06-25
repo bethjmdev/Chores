@@ -34,6 +34,25 @@ function Points({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
     [pointsByWho],
   )
 
+  const combinedBreakdown = useMemo(() => {
+    return challengeLevelsList.map((level, levelIndex) => {
+      const levelChores = choreInfo.filter((item) => item.challenge === level.challenge)
+      const levelPoints = levelChores.reduce((sum, item) => sum + (item.points || 0), 0)
+
+      return {
+        challenge: level.challenge,
+        choreCount: levelChores.length,
+        levelPoints,
+        levelIndex,
+      }
+    })
+  }, [choreInfo, challengeLevelsList])
+
+  const combinedChoreCount = useMemo(
+    () => combinedBreakdown.reduce((sum, level) => sum + level.choreCount, 0),
+    [combinedBreakdown],
+  )
+
   return (
     <div className="Points">
       <div className="Points-Container">
@@ -76,8 +95,25 @@ function Points({ choreInfo, whoList, challengeLevelsList, seedStatus }) {
                 ))}
               </ul>
               <div className="Points-GrandTotal">
-                <span>Combined total</span>
-                <strong>{grandTotal} pts</strong>
+                <span className="Points-GrandTotal-Label">Combined total</span>
+                <div className="Points-BubbleRow Points-GrandTotal-Bubbles">
+                  {combinedBreakdown.map((level) => (
+                    <div
+                      key={level.challenge}
+                      className="Points-LevelBubble"
+                      style={getChallengeLevelStyle(level.levelIndex)}
+                    >
+                      <span className="Points-LevelBubble-Name">{level.challenge}</span>
+                      <span className="Points-LevelBubble-Count">{level.choreCount} chores</span>
+                      <span className="Points-LevelBubble-Points">{level.levelPoints} pts</span>
+                    </div>
+                  ))}
+                  <div className="Points-LevelBubble Points-TotalBubble">
+                    <span className="Points-LevelBubble-Name">Total</span>
+                    <span className="Points-LevelBubble-Count">{combinedChoreCount} chores</span>
+                    <span className="Points-LevelBubble-Points">{grandTotal} pts</span>
+                  </div>
+                </div>
               </div>
             </>
           )}

@@ -135,6 +135,263 @@
   border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
+.Successful-Form {
+  display: grid;
+  gap: 1rem;
+  max-width: 32rem;
+  margin-bottom: 1.5rem;
+}
+
+.Successful-Form-Field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.Successful-Form-Field-Radio {
+  gap: 0.55rem;
+}
+
+.Successful-Form-Label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.Successful-Form-Select {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.Successful-Form-Input {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.Successful-Form-Combobox {
+  position: relative;
+}
+
+.Successful-Form-Combobox-List {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.12);
+}
+
+.Successful-Form-Combobox-Option {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.Successful-Form-Combobox-Option:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.Successful-Form-Select:focus,
+.Successful-Form-Input:focus {
+  border-color: rgba(139, 92, 246, 0.35);
+  outline: none;
+}
+
+.Successful-Form-RadioGroup {
+  display: flex;
+  gap: 1rem;
+}
+
+.Successful-Form-RadioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.Successful-Form-Actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.Successful-Form-Button {
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.22);
+}
+
+.Successful-Form-Button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.Successful-Form-Message {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.Successful-Form-Message-Success {
+  color: #047857;
+}
+
+.Successful-Form-Message-Error {
+  color: #be185d;
+}
+
+.Successful-Display-Section,
+.Successful-WeakBubble-Section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.Successful-Display-Title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.Successful-Failures-List {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.Successful-Failures-Who {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(236, 72, 153, 0.15);
+  overflow: visible;
+}
+
+.Successful-Failures-Who-Name {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.Successful-Failures-Who-Chores {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #be185d;
+  font-size: 0.88rem;
+}
+
+.Successful-Failures-Who-Chores li {
+  margin-bottom: 0.25rem;
+}
+
+.Successful-ChoreHover {
+  position: relative;
+  cursor: default;
+}
+
+.Successful-ChoreHover-Tooltip {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 9rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(30, 27, 46, 0.95);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(30, 27, 46, 0.2);
+  pointer-events: none;
+}
+
+.Successful-ChoreHover:hover .Successful-ChoreHover-Tooltip {
+  display: flex;
+}
+
+.Successful-ChoreHover-Tooltip-Row {
+  display: block;
+}
+
+.Successful-WeakBubble-Row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.Successful-WeakBubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 124, 255, 0.12), rgba(139, 92, 246, 0.12), rgba(236, 72, 153, 0.12));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.Successful-WeakBubble-Name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+}
+
+.Successful-Loading {
+  margin: 0;
+  color: var(--muted);
+}
+
+.Successful-Error {
+  margin: 0;
+  color: #be185d;
+}
+
+.Successful-Empty {
+  margin: 0;
+  color: var(--muted);
+}
+
 .Points-List {
   list-style: none;
   margin: 0;
@@ -231,7 +488,7 @@
 .Points-GrandTotal {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 1rem;
   padding: 1rem 1.1rem;
   border-radius: 16px;
@@ -239,8 +496,14 @@
   color: var(--ink);
 }
 
-.Points-GrandTotal strong {
-  font-size: 1.25rem;
+.Points-GrandTotal-Label {
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.Points-GrandTotal-Bubbles {
+  margin-left: auto;
 }
 
 .Points-Loading {
@@ -298,6 +561,63 @@
   border-color: rgba(139, 92, 246, 0.35);
   background: rgba(255, 255, 255, 0.95);
   outline: none;
+}
+
+.All-Combobox {
+  position: relative;
+  min-width: 12rem;
+}
+
+.All-Combobox-Input {
+  width: 100%;
+  min-width: 12rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.All-Combobox-Input:hover,
+.All-Combobox-Input:focus {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  outline: none;
+}
+
+.All-Combobox-List {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.12);
+}
+
+.All-Combobox-Option {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.All-Combobox-Option:hover {
+  background: rgba(139, 92, 246, 0.08);
 }
 
 .All-SortButton-Clear {

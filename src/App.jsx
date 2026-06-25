@@ -19,11 +19,11 @@ import RobeySubcategories from './pages/RobeySubcategories'
 import All from './pages/All'
 
 const navItems = [
-  'All',
   'Assigned Chores',
+  'All',
   'Levels',
-  'Successful?',
   'Points',
+  'Successful?',
   'Completed Beth',
   'Completed Robey',
   'Robey Subcategories',
@@ -40,7 +40,7 @@ function renderActivePage(activeNav, props) {
     case 'Assigned Chores':
       return <AssignedChores {...props} />
     case 'Successful?':
-      return <Successful />
+      return <Successful {...props} />
     case 'Completed Beth':
       return <CompletedBeth />
     case 'Completed Robey':
