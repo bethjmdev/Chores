@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { buildRobeyQueueSchedule, saveQueueCompletion, saveQueueDayMove, MAX_QUEUE_DAYS } from '../utils/robeyQueueSchedule'
+import { buildRobeyQueueSchedule, saveQueueCompletion, saveQueueDayMove, MAX_QUEUE_DAYS, formatQueueWeekNavLabel } from '../utils/robeyQueueSchedule'
 import { useViewSelection } from '../utils/viewSelectionStorage'
 
 const QUEUE_VIEW_STORAGE_KEY = 'chores-view-robey-queue-days'
+const QUEUE_MAX_DAY_COLUMNS = 7
 
 function getDayKey(dayIndex) {
   return String(dayIndex)
@@ -16,6 +17,7 @@ function RobeyQueue({
   whenCompletedList,
   frequencyOfList,
   timeOfDayList = [],
+  queueDayMoveList = [],
   seedStatus,
   reloadData,
 }) {
@@ -23,6 +25,10 @@ function RobeyQueue({
   const [dragOverDayIndex, setDragOverDayIndex] = useState(null)
   const [showCatchUp, setShowCatchUp] = useState(false)
   const [actionStatus, setActionStatus] = useState('idle')
+  const [weekOffset, setWeekOffset] = useState(0)
+
+  const isViewingCurrentWindow = weekOffset === 0
+  const weekNavLabel = formatQueueWeekNavLabel(weekOffset)
 
   const dayKeys = useMemo(
     () => Array.from({ length: MAX_QUEUE_DAYS }, (_, dayIndex) => getDayKey(dayIndex)),
@@ -43,6 +49,8 @@ function RobeyQueue({
       whenCompletedList,
       frequencyOfList,
       timeOfDayList,
+      queueDayMoveList,
+      weekOffset,
     }),
     [
       whoList,
@@ -52,6 +60,8 @@ function RobeyQueue({
       whenCompletedList,
       frequencyOfList,
       timeOfDayList,
+      queueDayMoveList,
+      weekOffset,
     ],
   )
 
@@ -64,6 +74,16 @@ function RobeyQueue({
 
     return schedule.days.filter((day) => selectedDayKeys.has(getDayKey(day.dayIndex)))
   }, [schedule.days, selectedDayKeys, isShowingAllDays])
+
+  const visibleDayRows = useMemo(() => {
+    const rows = []
+
+    for (let index = 0; index < visibleDays.length; index += QUEUE_MAX_DAY_COLUMNS) {
+      rows.push(visibleDays.slice(index, index + QUEUE_MAX_DAY_COLUMNS))
+    }
+
+    return rows
+  }, [visibleDays])
 
   const itemMap = useMemo(() => {
     const map = new Map()
@@ -149,11 +169,13 @@ function RobeyQueue({
   }
 
   function renderQueueItem(item, { draggable = true, showMissedDay = false } = {}) {
+    const canInteract = isViewingCurrentWindow
+
     return (
       <li
         key={item.key}
         className={`RobeyQueue-Day-ListItem${draggedItemKey === item.key ? ' RobeyQueue-Day-ListItem-Dragging' : ''}`}
-        draggable={draggable && actionStatus !== 'saving'}
+        draggable={canInteract && draggable && actionStatus !== 'saving'}
         onDragStart={() => setDraggedItemKey(item.key)}
         onDragEnd={() => {
           setDraggedItemKey(null)
@@ -164,7 +186,7 @@ function RobeyQueue({
           <input
             type="checkbox"
             className="RobeyQueue-Checkbox"
-            disabled={actionStatus === 'saving'}
+            disabled={!canInteract || actionStatus === 'saving'}
             onChange={() => handleComplete(item)}
             onClick={(e) => e.stopPropagation()}
           />
@@ -217,7 +239,7 @@ function RobeyQueue({
   }
 
   async function handleDrop(targetDayIndex) {
-    if (draggedItemKey == null || schedule.robeyRowId == null) {
+    if (!isViewingCurrentWindow || draggedItemKey == null || schedule.robeyRowId == null) {
       return
     }
 
@@ -238,6 +260,8 @@ function RobeyQueue({
         whenCompletedList,
         choresList,
         frequencyOfList,
+        queueDayMoveList,
+        viewStart: schedule.viewStart,
       })
 
       await reloadData({ silent: true })
@@ -280,6 +304,33 @@ function RobeyQueue({
 
           {seedStatus === 'ready' && schedule.robeyRowId != null && (
             <>
+              <div className="RobeyQueue-WeekNav">
+                <button
+                  type="button"
+                  className="RobeyQueue-WeekNav-Button"
+                  onClick={() => setWeekOffset((prev) => prev - 1)}
+                >
+                  Previous week
+                </button>
+                <span className="RobeyQueue-WeekNav-Label">{weekNavLabel}</span>
+                {!isViewingCurrentWindow && (
+                  <button
+                    type="button"
+                    className="RobeyQueue-WeekNav-Button"
+                    onClick={() => setWeekOffset(0)}
+                  >
+                    Today
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="RobeyQueue-WeekNav-Button RobeyQueue-WeekNav-Button-Next"
+                  onClick={() => setWeekOffset((prev) => prev + 1)}
+                >
+                  Next week
+                </button>
+              </div>
+
               <div className="RobeyQueue-Filter">
                 <span className="RobeyQueue-Filter-Label">View</span>
                 <button
@@ -312,7 +363,7 @@ function RobeyQueue({
                 </button>
               </div>
 
-              {catchUpCount > 0 && (
+              {catchUpCount > 0 && isViewingCurrentWindow && (
                 <div className="RobeyQueue-CatchUpBar">
                   <button
                     type="button"
@@ -325,7 +376,7 @@ function RobeyQueue({
                 </div>
               )}
 
-              {showCatchUp && catchUpCount > 0 && (
+              {showCatchUp && catchUpCount > 0 && isViewingCurrentWindow && (
                 <div className="RobeyQueue-CatchUp">
                   <h3 className="RobeyQueue-CatchUp-Title">Catch up</h3>
                   <p className="RobeyQueue-CatchUp-Note">
@@ -342,9 +393,13 @@ function RobeyQueue({
 
               {(totalVisibleItems > 0 || allScheduledCount > 0 || schedule.asNeededItems.length > 0) && (
                 <>
-                  {scheduledCount > 0 && visibleDays.length > 0 && (
-                    <div className="RobeyQueue-Days">
-                      {visibleDays.map((day) => (
+                  {scheduledCount > 0 && visibleDays.length > 0 && visibleDayRows.map((dayRow, rowIndex) => (
+                    <div
+                      key={`queue-day-row-${rowIndex}`}
+                      className="RobeyQueue-Days"
+                      style={{ '--queue-visible-days': dayRow.length }}
+                    >
+                      {dayRow.map((day) => (
                         <div
                           key={day.dayIndex}
                           className={`RobeyQueue-Day${dragOverDayIndex === day.dayIndex ? ' RobeyQueue-Day-DragOver' : ''}`}
@@ -377,7 +432,7 @@ function RobeyQueue({
                         </div>
                       ))}
                     </div>
-                  )}
+                  ))}
 
                   {allScheduledCount > 0 && visibleDays.length === 0 && (
                     <p className="RobeyQueue-Empty">No days selected. Click All or Clear to reset.</p>

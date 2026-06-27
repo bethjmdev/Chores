@@ -2,33 +2,121 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import {
-  getFrequencyIntervalDays,
-  isSubcategoryChecked,
   resetDueSubcategories,
 } from '../utils/subcategoryDue'
+import { supportsQueueDayOfWeek, supportsQueueWeekdaysPicker, getQueueWeekdayPickCount, normalizeQueueWeekdays } from '../utils/frequencyQueue'
 import { sortChoresByFrequency } from '../utils/sortChores'
-import { getQueueWeekdayOptions } from '../utils/robeyQueueSchedule'
+import { getQueueWeekdayOptions, savePersonChoreSchedule, buildCompletionMap } from '../utils/robeyQueueSchedule'
 import {
   getPreferredTimeOfDayLabel,
   parsePreferredTimeOfDayRowId,
 } from '../utils/preferredTimeOfDay'
 
-function getCompletionWhoRowId(entry) {
-  return entry.who ?? entry.whoRowid ?? null
-}
-
-function getCompletionChoreRowId(entry) {
-  return entry.chore ?? entry.choreRowid ?? null
-}
-
 const emptyAddForm = {
   choreRowId: '',
   label: '',
   dueDayOfWeek: '',
+  queueWeekdays: [],
   preferredTimeOfDay: '',
 }
 
 const choreTimesCollapsedKey = 'robeySubcategories-choreTimesCollapsed'
+
+function QueueWeekdayPicker({
+  value,
+  maxCount,
+  disabled,
+  onChange,
+  options,
+}) {
+  const pickLimit = maxCount ?? 7
+  const [localDays, setLocalDays] = useState(() => normalizeQueueWeekdays(value) ?? [])
+
+  useEffect(() => {
+    setLocalDays(normalizeQueueWeekdays(value) ?? [])
+  }, [value])
+
+  const selected = new Set(localDays)
+
+  function toggle(day) {
+    const next = new Set(selected)
+
+    if (next.has(day)) {
+      next.delete(day)
+    } else if (next.size < pickLimit) {
+      next.add(day)
+    }
+
+    const nextDays = [...next].sort((a, b) => a - b)
+    setLocalDays(nextDays)
+    onChange(nextDays)
+  }
+
+  return (
+    <div className="RobeySubcategories-Weekdays">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={`RobeySubcategories-Weekday-Button${selected.has(option.value) ? ' RobeySubcategories-Weekday-Button-Active' : ''}`}
+          disabled={disabled || (!selected.has(option.value) && selected.size >= pickLimit)}
+          onClick={() => toggle(option.value)}
+          title={option.label}
+        >
+          {option.label.slice(0, 3)}
+        </button>
+      ))}
+      <span className="RobeySubcategories-Weekdays-Count">
+        {selected.size}
+        /
+        {maxCount}
+      </span>
+    </div>
+  )
+}
+
+function renderQueueDayField({
+  freq,
+  frequencyLabel,
+  queueWeekdays,
+  dueDayOfWeek,
+  disabled,
+  onQueueWeekdaysChange,
+  onDueDayChange,
+  queueWeekdayOptions,
+}) {
+  if (supportsQueueWeekdaysPicker(freq, frequencyLabel)) {
+    return (
+      <QueueWeekdayPicker
+        value={queueWeekdays}
+        maxCount={getQueueWeekdayPickCount(freq, frequencyLabel)}
+        disabled={false}
+        onChange={onQueueWeekdaysChange}
+        options={queueWeekdayOptions}
+      />
+    )
+  }
+
+  if (supportsQueueDayOfWeek(freq, frequencyLabel)) {
+    return (
+      <select
+        className="RobeySubcategories-ChoreTimes-Select"
+        value={dueDayOfWeek != null ? String(dueDayOfWeek) : ''}
+        disabled={disabled}
+        onChange={(e) => onDueDayChange(e.target.value)}
+      >
+        <option value="">Auto spread</option>
+        {queueWeekdayOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    )
+  }
+
+  return <span className="RobeySubcategories-ChoreTimes-Na">—</span>
+}
 
 function loadChoreTimesCollapsed() {
   try {
@@ -61,10 +149,10 @@ function RobeySubcategories({
   const [editingRowId, setEditingRowId] = useState(null)
   const [editLabel, setEditLabel] = useState('')
   const [editDueDayOfWeek, setEditDueDayOfWeek] = useState('')
+  const [editQueueWeekdays, setEditQueueWeekdays] = useState([])
   const [editPreferredTimeOfDay, setEditPreferredTimeOfDay] = useState('')
   const [choreTimesCollapsed, setChoreTimesCollapsed] = useState(() => loadChoreTimesCollapsed())
   const [saveStatus, setSaveStatus] = useState('idle')
-  const [nowTick, setNowTick] = useState(Date.now())
   const resetRunning = useRef(false)
 
   const robeyRowId = useMemo(
@@ -156,24 +244,62 @@ function RobeySubcategories({
     [robeyChores, choreRowIdsWithSubcategories],
   )
 
-  const completionMap = useMemo(() => {
-    const map = new Map()
+  const scheduleRows = useMemo(() => {
+    const choreMap = Object.fromEntries(robeyChores.map((item) => [item.choreRowId, item]))
+    const rows = []
 
-    if (robeyRowId == null) {
-      return map
-    }
-
-    whenCompletedList.forEach((entry) => {
-      const whoRowId = getCompletionWhoRowId(entry)
-      const choreRowId = getCompletionChoreRowId(entry)
-
-      if (whoRowId === robeyRowId && choreRowId != null) {
-        map.set(choreRowId, entry)
+    robeySubcategories.forEach((subcategory) => {
+      const parentChore = choreMap[subcategory.choreRowId]
+      if (!parentChore) {
+        return
       }
+
+      rows.push({
+        key: `sub-${subcategory.rowId}`,
+        type: 'subcategory',
+        label: subcategory.label,
+        parentChore: parentChore.chore,
+        frequencySort: parentChore.frequencySort ?? 999,
+        freq: frequencyMap[parentChore.freqId],
+        frequencyLabel: parentChore.frequency,
+        subcategory,
+        chore: parentChore,
+      })
     })
 
-    return map
-  }, [whenCompletedList, robeyRowId])
+    choresWithoutSubcategories.forEach((chore) => {
+      rows.push({
+        key: `chore-${chore.choreRowId}`,
+        type: 'chore',
+        label: chore.chore,
+        parentChore: null,
+        frequencySort: chore.frequencySort ?? 999,
+        freq: frequencyMap[chore.freqId],
+        frequencyLabel: chore.frequency,
+        subcategory: null,
+        chore,
+      })
+    })
+
+    return rows.sort((a, b) => {
+      if (a.frequencySort !== b.frequencySort) {
+        return a.frequencySort - b.frequencySort
+      }
+
+      const parentA = a.parentChore || a.label
+      const parentB = b.parentChore || b.label
+      if (parentA !== parentB) {
+        return parentA.localeCompare(parentB)
+      }
+
+      return a.label.localeCompare(b.label)
+    })
+  }, [robeySubcategories, choresWithoutSubcategories, robeyChores, frequencyMap])
+
+  const completionMap = useMemo(
+    () => buildCompletionMap(whenCompletedList, robeyRowId),
+    [whenCompletedList, robeyRowId],
+  )
 
   useEffect(() => {
     if (seedStatus !== 'ready') {
@@ -194,8 +320,6 @@ function RobeySubcategories({
           frequencyOfList,
         )
 
-        setNowTick(Date.now())
-
         if (resetCount > 0) {
           await reloadData({ silent: true })
         }
@@ -209,14 +333,6 @@ function RobeySubcategories({
     const intervalId = setInterval(checkDueSubcategories, 60000)
     return () => clearInterval(intervalId)
   }, [seedStatus, robeySubcategoryList, choresList, frequencyOfList, reloadData])
-
-  function getIntervalDays(freqId) {
-    if (freqId == null) {
-      return getFrequencyIntervalDays(null)
-    }
-
-    return getFrequencyIntervalDays(frequencyMap[freqId])
-  }
 
   function toggleChoreTimesCollapsed() {
     setChoreTimesCollapsed((prev) => {
@@ -232,6 +348,7 @@ function RobeySubcategories({
     setEditDueDayOfWeek(
       subcategory.dueDayOfWeek != null ? String(subcategory.dueDayOfWeek) : '',
     )
+    setEditQueueWeekdays(normalizeQueueWeekdays(subcategory.queueWeekdays) ?? [])
     setEditPreferredTimeOfDay(
       subcategory.preferredTimeOfDay != null ? String(subcategory.preferredTimeOfDay) : '',
     )
@@ -241,10 +358,11 @@ function RobeySubcategories({
     setEditingRowId(null)
     setEditLabel('')
     setEditDueDayOfWeek('')
+    setEditQueueWeekdays([])
     setEditPreferredTimeOfDay('')
   }
 
-  async function saveChorePreferredTime(chore, preferredTimeOfDay) {
+  async function saveChoreSchedule(chore, field, value) {
     if (robeyRowId == null) {
       return
     }
@@ -252,38 +370,71 @@ function RobeySubcategories({
     setSaveStatus('saving')
 
     try {
-      const nextTime = parsePreferredTimeOfDayRowId(preferredTimeOfDay)
-      const completion = completionMap.get(chore.choreRowId)
+      const patch = {}
 
-      if (completion) {
-        await setDoc(
-          doc(db, 'When_Completed', String(completion.rowId ?? completion.id)),
-          { preferredTimeOfDay: nextTime },
-          { merge: true },
-        )
-      } else if (nextTime) {
-        const choreRow = choresList.find((entry) => entry.rowId === chore.choreRowId)
-        const maxRowId = whenCompletedList.reduce(
-          (max, entry) => Math.max(max, entry.rowId || 0),
-          0,
-        )
-        const newRowId = maxRowId + 1
-
-        await setDoc(doc(db, 'When_Completed', String(newRowId)), {
-          rowId: newRowId,
-          whoRowid: robeyRowId,
-          choreRowid: chore.choreRowId,
-          freqRowid: choreRow?.freqId ?? chore.freqId ?? null,
-          preferredTimeOfDay: nextTime,
-          isCompleted: null,
-          timestamp: null,
-        })
+      if (field === 'preferredTimeOfDay') {
+        patch.preferredTimeOfDay = parsePreferredTimeOfDayRowId(value)
       }
+
+      if (field === 'dueDayOfWeek') {
+        patch.dueDayOfWeek = value === '' ? null : Number(value)
+      }
+
+      if (field === 'queueWeekdays') {
+        patch.queueWeekdays = normalizeQueueWeekdays(value)
+      }
+
+      await savePersonChoreSchedule({
+        chore,
+        personRowId: robeyRowId,
+        whenCompletedList,
+        choresList,
+        patch,
+      })
 
       await reloadData({ silent: true })
       setSaveStatus('idle')
     } catch (err) {
-      console.error('Failed to save chore time:', err)
+      console.error('Failed to save chore schedule:', err)
+      setSaveStatus('error')
+    }
+  }
+
+  async function saveSubcategorySchedule(subcategory, field, value) {
+    setSaveStatus('saving')
+
+    try {
+      const patch = {}
+
+      if (field === 'preferredTimeOfDay') {
+        patch.preferredTimeOfDay = parsePreferredTimeOfDayRowId(value)
+      }
+
+      if (field === 'dueDayOfWeek') {
+        patch.dueDayOfWeek = value === '' ? null : Number(value)
+        if (value !== '') {
+          patch.queueWeekdays = null
+        }
+      }
+
+      if (field === 'queueWeekdays') {
+        const savedQueueWeekdays = normalizeQueueWeekdays(value)
+        patch.queueWeekdays = savedQueueWeekdays
+        if (savedQueueWeekdays) {
+          patch.dueDayOfWeek = null
+        }
+      }
+
+      await setDoc(
+        doc(db, 'RobeySubCategory', String(subcategory.rowId)),
+        patch,
+        { merge: true },
+      )
+
+      await reloadData({ silent: true })
+      setSaveStatus('idle')
+    } catch (err) {
+      console.error('Failed to save subcategory schedule:', err)
       setSaveStatus('error')
     }
   }
@@ -309,6 +460,8 @@ function RobeySubcategories({
       )
       const newRowId = maxRowId + 1
 
+      const savedQueueWeekdays = normalizeQueueWeekdays(addForm.queueWeekdays)
+
       await setDoc(doc(db, 'RobeySubCategory', String(newRowId)), {
         rowId: newRowId,
         choreRowId,
@@ -317,7 +470,8 @@ function RobeySubcategories({
         sort: maxSort + 1,
         active: 1,
         completedAt: null,
-        dueDayOfWeek: addForm.dueDayOfWeek === '' ? null : Number(addForm.dueDayOfWeek),
+        dueDayOfWeek: savedQueueWeekdays ? null : (addForm.dueDayOfWeek === '' ? null : Number(addForm.dueDayOfWeek)),
+        queueWeekdays: savedQueueWeekdays,
         preferredTimeOfDay: parsePreferredTimeOfDayRowId(addForm.preferredTimeOfDay),
       })
 
@@ -338,11 +492,14 @@ function RobeySubcategories({
     setSaveStatus('saving')
 
     try {
+      const savedQueueWeekdays = normalizeQueueWeekdays(editQueueWeekdays)
+
       await setDoc(
         doc(db, 'RobeySubCategory', String(rowId)),
         {
           label: editLabel.trim(),
-          dueDayOfWeek: editDueDayOfWeek === '' ? null : Number(editDueDayOfWeek),
+          dueDayOfWeek: savedQueueWeekdays ? null : (editDueDayOfWeek === '' ? null : Number(editDueDayOfWeek)),
+          queueWeekdays: savedQueueWeekdays,
           preferredTimeOfDay: parsePreferredTimeOfDayRowId(editPreferredTimeOfDay),
         },
         { merge: true },
@@ -380,45 +537,13 @@ function RobeySubcategories({
     }
   }
 
-  async function handleToggleComplete(subcategory, parentChore) {
-    const intervalDays = getIntervalDays(parentChore.freqId)
-    const isChecked = isSubcategoryChecked(subcategory.completedAt, intervalDays, nowTick)
-    const nextCompletedAt = isChecked ? null : Date.now()
-
-    setSaveStatus('saving')
-
-    try {
-      await setDoc(
-        doc(db, 'RobeySubCategory', String(subcategory.rowId)),
-        {
-          completedAt: nextCompletedAt,
-          ...(nextCompletedAt != null
-            ? {
-              queueDueAt: null,
-              ...(subcategory.dueDayOfWeek == null
-                ? { dueDayOfWeek: new Date().getDay() }
-                : {}),
-            }
-            : {}),
-        },
-        { merge: true },
-      )
-
-      await reloadData({ silent: true })
-      setSaveStatus('idle')
-    } catch (err) {
-      console.error('Failed to update subcategory completion:', err)
-      setSaveStatus('error')
-    }
-  }
-
   return (
     <div className="RobeySubcategories">
       <div className="RobeySubcategories-Container">
         <header className="RobeySubcategories-Header">
           <h2>Robey Subcategories</h2>
           <p>
-            Split Robey&apos;s chores into sub-tasks or set a preferred time of day for any assigned chore.
+            Split Robey&apos;s chores into sub-tasks, then assign queue days and time in Chore schedule.
             Frequency still comes from the parent chore.
           </p>
         </header>
@@ -437,7 +562,7 @@ function RobeySubcategories({
 
           {seedStatus === 'ready' && robeyRowId != null && (
             <>
-              {choresWithoutSubcategories.length > 0 && (
+              {scheduleRows.length > 0 && (
                 <div className={`RobeySubcategories-ChoreTimes${choreTimesCollapsed ? ' RobeySubcategories-ChoreTimes-Collapsed' : ''}`}>
                   <div className="RobeySubcategories-ChoreTimes-Header">
                     <button
@@ -449,9 +574,9 @@ function RobeySubcategories({
                       <span className="RobeySubcategories-ChoreTimes-Toggle-Icon" aria-hidden="true">
                         {choreTimesCollapsed ? '▸' : '▾'}
                       </span>
-                      <span className="RobeySubcategories-ChoreTimes-Title">Chore times</span>
+                      <span className="RobeySubcategories-ChoreTimes-Title">Chore schedule</span>
                       <span className="RobeySubcategories-ChoreTimes-Count">
-                        {choresWithoutSubcategories.length}
+                        {scheduleRows.length}
                       </span>
                     </button>
                   </div>
@@ -459,28 +584,68 @@ function RobeySubcategories({
                   {!choreTimesCollapsed && (
                     <>
                       <p className="RobeySubcategories-ChoreTimes-Note">
-                        Set a preferred time for chores that are not split into subcategories.
+                        Assign schedule and time for each subcategory or whole chore.
+                        For 2–3×/week or 5×/week, tap the day buttons (Sun–Sat).
                       </p>
                       <div className="RobeySubcategories-ChoreTimes-Table">
                         <div className="RobeySubcategories-ChoreTimes-Table-Header">
-                          <span className="RobeySubcategories-ChoreTimes-Table-Header-Label">Chore</span>
+                          <span className="RobeySubcategories-ChoreTimes-Table-Header-Label">Task</span>
+                          <span className="RobeySubcategories-ChoreTimes-Table-Header-Label">Schedule</span>
                           <span className="RobeySubcategories-ChoreTimes-Table-Header-Label">Time of day</span>
                         </div>
                         <ul className="RobeySubcategories-ChoreTimes-List">
-                          {choresWithoutSubcategories.map((chore) => {
-                            const completion = completionMap.get(chore.choreRowId)
-                            const timeValue = completion?.preferredTimeOfDay != null
-                              ? String(completion.preferredTimeOfDay)
+                          {scheduleRows.map((row) => {
+                            const scheduleSource = row.type === 'subcategory'
+                              ? row.subcategory
+                              : completionMap.get(row.chore.choreRowId)
+                            const timeValue = scheduleSource?.preferredTimeOfDay != null
+                              ? String(scheduleSource.preferredTimeOfDay)
                               : ''
 
                             return (
-                              <li key={chore.choreRowId} className="RobeySubcategories-ChoreTimes-Item">
-                                <span className="RobeySubcategories-ChoreTimes-Label">{chore.chore}</span>
+                              <li key={row.key} className="RobeySubcategories-ChoreTimes-Item">
+                                <span className="RobeySubcategories-ChoreTimes-Label">
+                                  {row.label}
+                                  {row.parentChore && (
+                                    <span className="RobeySubcategories-ChoreTimes-ParentInline">
+                                      {' · '}
+                                      {row.parentChore}
+                                    </span>
+                                  )}
+                                </span>
+                                {renderQueueDayField({
+                                  freq: row.freq,
+                                  frequencyLabel: row.chore.frequency,
+                                  queueWeekdays: scheduleSource?.queueWeekdays,
+                                  dueDayOfWeek: scheduleSource?.dueDayOfWeek,
+                                  disabled: saveStatus === 'saving',
+                                  onQueueWeekdaysChange: (days) => {
+                                    if (row.type === 'subcategory') {
+                                      saveSubcategorySchedule(row.subcategory, 'queueWeekdays', days)
+                                      return
+                                    }
+                                    saveChoreSchedule(row.chore, 'queueWeekdays', days)
+                                  },
+                                  onDueDayChange: (value) => {
+                                    if (row.type === 'subcategory') {
+                                      saveSubcategorySchedule(row.subcategory, 'dueDayOfWeek', value)
+                                      return
+                                    }
+                                    saveChoreSchedule(row.chore, 'dueDayOfWeek', value)
+                                  },
+                                  queueWeekdayOptions,
+                                })}
                                 <select
                                   className="RobeySubcategories-ChoreTimes-Select"
                                   value={timeValue}
                                   disabled={saveStatus === 'saving'}
-                                  onChange={(e) => saveChorePreferredTime(chore, e.target.value)}
+                                  onChange={(e) => {
+                                    if (row.type === 'subcategory') {
+                                      saveSubcategorySchedule(row.subcategory, 'preferredTimeOfDay', e.target.value)
+                                      return
+                                    }
+                                    saveChoreSchedule(row.chore, 'preferredTimeOfDay', e.target.value)
+                                  }}
                                 >
                                   <option value="">No preference</option>
                                   {timeOfDayOptions.map((option) => (
@@ -510,7 +675,12 @@ function RobeySubcategories({
                       id="robey-sub-parent"
                       className="RobeySubcategories-Form-Select"
                       value={addForm.choreRowId}
-                      onChange={(e) => setAddForm((prev) => ({ ...prev, choreRowId: e.target.value }))}
+                      onChange={(e) => setAddForm((prev) => ({
+                        ...prev,
+                        choreRowId: e.target.value,
+                        dueDayOfWeek: '',
+                        queueWeekdays: [],
+                      }))}
                       required
                     >
                       <option value="">Select chore</option>
@@ -537,23 +707,30 @@ function RobeySubcategories({
                     />
                   </div>
 
-                  <div className="RobeySubcategories-Form-Field">
-                    <label className="RobeySubcategories-Form-Label" htmlFor="robey-sub-day">
-                      Queue day
-                    </label>
-                    <select
-                      id="robey-sub-day"
-                      className="RobeySubcategories-Form-Select"
-                      value={addForm.dueDayOfWeek}
-                      onChange={(e) => setAddForm((prev) => ({ ...prev, dueDayOfWeek: e.target.value }))}
-                    >
-                      <option value="">Auto spread</option>
-                      {queueWeekdayOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="RobeySubcategories-Form-Field RobeySubcategories-Form-Field-Full">
+                    <span className="RobeySubcategories-Form-Label">Schedule</span>
+                    {renderQueueDayField({
+                      freq: frequencyMap[robeyChores.find(
+                        (item) => item.choreRowId === Number(addForm.choreRowId),
+                      )?.freqId],
+                      frequencyLabel: robeyChores.find(
+                        (item) => item.choreRowId === Number(addForm.choreRowId),
+                      )?.frequency,
+                      queueWeekdays: addForm.queueWeekdays,
+                      dueDayOfWeek: addForm.dueDayOfWeek,
+                      disabled: saveStatus === 'saving' || !addForm.choreRowId,
+                      onQueueWeekdaysChange: (days) => setAddForm((prev) => ({
+                        ...prev,
+                        queueWeekdays: days,
+                        dueDayOfWeek: '',
+                      })),
+                      onDueDayChange: (value) => setAddForm((prev) => ({
+                        ...prev,
+                        dueDayOfWeek: value,
+                        queueWeekdays: [],
+                      })),
+                      queueWeekdayOptions,
+                    })}
                   </div>
 
                   <div className="RobeySubcategories-Form-Field">
@@ -601,7 +778,6 @@ function RobeySubcategories({
               <div className="RobeySubcategories-Groups">
                 {groupedSubcategories.map((group) => {
                   const frequencyLabel = frequencyLabelMap[group.parentChore.freqId] || '—'
-                  const intervalDays = getIntervalDays(group.parentChore.freqId)
 
                   return (
                     <div key={group.parentChore.choreRowId} className="RobeySubcategories-Group">
@@ -612,15 +788,19 @@ function RobeySubcategories({
 
                       <ul className="RobeySubcategories-List">
                         {group.items.map((subcategory) => {
-                          const isChecked = isSubcategoryChecked(
-                            subcategory.completedAt,
-                            intervalDays,
-                            nowTick,
-                          )
                           const isEditing = editingRowId === subcategory.rowId
-                          const queueDayLabel = queueWeekdayOptions.find(
-                            (option) => option.value === subcategory.dueDayOfWeek,
-                          )?.label
+                          const parentFreq = frequencyMap[group.parentChore.freqId]
+                          const customWeekdays = normalizeQueueWeekdays(subcategory.queueWeekdays)
+                          const queueDaysLabel = supportsQueueWeekdaysPicker(parentFreq, group.parentChore.frequency)
+                            ? (customWeekdays?.length
+                              ? customWeekdays
+                                .map((day) => queueWeekdayOptions.find((option) => option.value === day)?.label)
+                                .filter(Boolean)
+                                .join(', ')
+                              : null)
+                            : queueWeekdayOptions.find(
+                              (option) => option.value === subcategory.dueDayOfWeek,
+                            )?.label
                           const preferredTimeLabel = getPreferredTimeOfDayLabel(
                             subcategory.preferredTimeOfDay,
                             timeOfDayOptions,
@@ -629,41 +809,36 @@ function RobeySubcategories({
                           return (
                             <li key={subcategory.rowId} className="RobeySubcategories-ListItem">
                               <div className="RobeySubcategories-ListItem-Main">
-                                <label className="RobeySubcategories-CheckLabel">
+                                {isEditing ? (
                                   <input
-                                    type="checkbox"
-                                    className="RobeySubcategories-Checkbox"
-                                    checked={isChecked}
-                                    disabled={saveStatus === 'saving'}
-                                    onChange={() => handleToggleComplete(subcategory, group.parentChore)}
+                                    type="text"
+                                    className="RobeySubcategories-EditInput"
+                                    value={editLabel}
+                                    onChange={(e) => setEditLabel(e.target.value)}
+                                    autoFocus
                                   />
-                                  {isEditing ? (
-                                    <input
-                                      type="text"
-                                      className="RobeySubcategories-EditInput"
-                                      value={editLabel}
-                                      onChange={(e) => setEditLabel(e.target.value)}
-                                      autoFocus
-                                    />
-                                  ) : (
-                                    <span className="RobeySubcategories-Label">{subcategory.label}</span>
-                                  )}
-                                </label>
+                                ) : (
+                                  <span className="RobeySubcategories-Label">{subcategory.label}</span>
+                                )}
 
                                 {isEditing ? (
                                   <>
-                                    <select
-                                      className="RobeySubcategories-EditSelect"
-                                      value={editDueDayOfWeek}
-                                      onChange={(e) => setEditDueDayOfWeek(e.target.value)}
-                                    >
-                                      <option value="">Auto spread</option>
-                                      {queueWeekdayOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
+                                    {renderQueueDayField({
+                                      freq: parentFreq,
+                                      frequencyLabel: group.parentChore.frequency,
+                                      queueWeekdays: editQueueWeekdays,
+                                      dueDayOfWeek: editDueDayOfWeek,
+                                      disabled: saveStatus === 'saving',
+                                      onQueueWeekdaysChange: (days) => {
+                                        setEditQueueWeekdays(days)
+                                        setEditDueDayOfWeek('')
+                                      },
+                                      onDueDayChange: (value) => {
+                                        setEditDueDayOfWeek(value)
+                                        setEditQueueWeekdays([])
+                                      },
+                                      queueWeekdayOptions,
+                                    })}
                                     <select
                                       className="RobeySubcategories-EditSelect"
                                       value={editPreferredTimeOfDay}
@@ -679,8 +854,8 @@ function RobeySubcategories({
                                   </>
                                 ) : (
                                   <>
-                                    {queueDayLabel && (
-                                      <span className="RobeySubcategories-QueueDay">{queueDayLabel}</span>
+                                    {queueDaysLabel && (
+                                      <span className="RobeySubcategories-QueueDay">{queueDaysLabel}</span>
                                     )}
                                     {preferredTimeLabel && (
                                       <span className="RobeySubcategories-PreferredTime">

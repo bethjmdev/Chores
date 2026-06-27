@@ -1,11 +1,22 @@
 import { useMemo, useState } from 'react'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
 import { sortChoresByPointsThenFrequency } from '../utils/sortChores'
+import { applyChoreAssignmentChange, saveChoreAssignmentRecord } from '../utils/subcategoryDue'
 import { useDoubleTap } from '../utils/useDoubleTap'
 
-function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyOfList, seedStatus, reloadData }) {
+function All({
+  choreInfo,
+  setChoreInfo,
+  whoList,
+  challengeLevelsList,
+  frequencyOfList,
+  choresList,
+  whenCompletedList,
+  queueDayMoveList,
+  robeySubcategoryList,
+  seedStatus,
+  reloadData,
+}) {
   const [editingChoreRowId, setEditingChoreRowId] = useState(null)
   const [filterChallenge, setFilterChallenge] = useState('')
   const [filterFrequency, setFilterFrequency] = useState('')
@@ -106,11 +117,19 @@ function All({ choreInfo, setChoreInfo, whoList, challengeLevelsList, frequencyO
     )
 
     try {
-      await setDoc(
-        doc(db, 'Assigned_To', String(choreRowId)),
-        { who: whoRowId, choreRowId },
-        { merge: true },
-      )
+      await saveChoreAssignmentRecord(choreRowId, whoRowId)
+
+      await applyChoreAssignmentChange({
+        choreRowId,
+        previousWhoRowId: currentItem.who,
+        newWhoRowId: whoRowId,
+        choreInfo,
+        choresList,
+        whenCompletedList,
+        queueDayMoveList,
+        robeySubcategoryList,
+        whoList,
+      })
 
       if (reloadData) {
         await reloadData({ silent: true })

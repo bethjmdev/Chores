@@ -19,7 +19,7 @@ const defaultFrequencyQueueConfigByRowId = {
 }
 
 const defaultIntervalDaysByRowId = {
-  1: 7,
+  1: 1,
   2: 1,
   3: 1,
   4: 2,
@@ -36,6 +36,11 @@ const defaultIntervalDaysByRowId = {
 export { defaultIntervalDaysByRowId }
 
 export function getFrequencyIntervalDays(freq) {
+  const queuePattern = freq?.queuePattern ?? defaultFrequencyQueueConfigByRowId[freq?.rowId]?.queuePattern
+  if (queuePattern === 'asNeeded') {
+    return 1
+  }
+
   if (freq?.intervalDays != null && freq.intervalDays > 0) {
     return freq.intervalDays
   }
@@ -76,6 +81,152 @@ export function isMultiDayQueuePattern(queuePattern) {
   return queuePattern === 'daily' || queuePattern === 'weekdays' || queuePattern === 'perWeek'
 }
 
+function inferOccurrencesPerWeekFromLabel(frequencyLabel) {
+  if (!frequencyLabel) {
+    return null
+  }
+
+  const label = frequencyLabel.toLowerCase()
+
+  if (label.includes('2-3') || label.includes('2–3')) {
+    return 3
+  }
+
+  const xMatch = label.match(/(\d)\s*x/)
+  if (xMatch) {
+    return Number(xMatch[1])
+  }
+
+  const daysAWeekMatch = label.match(/(\d)\s*days?\s+a\s+week/)
+  if (daysAWeekMatch) {
+    return Number(daysAWeekMatch[1])
+  }
+
+  if (label.includes('weekday') || label.includes('5x') || label.includes('5 x')) {
+    return 5
+  }
+
+  return null
+}
+
+function inferQueuePatternFromFrequencyLabel(frequencyLabel) {
+  if (!frequencyLabel) {
+    return null
+  }
+
+  const label = frequencyLabel.toLowerCase()
+  if (
+    label.includes('5x')
+    || label.includes('5 x')
+    || label.includes('weekday')
+    || label.includes('5 times')
+    || label.includes('5 days')
+    || label.includes('5 day')
+  ) {
+    return 'weekdays'
+  }
+
+  if (
+    label.includes('2x')
+    || label.includes('3x')
+    || label.includes('2 x')
+    || label.includes('3 x')
+    || label.includes('2-3')
+    || label.includes('2–3')
+  ) {
+    return 'perWeek'
+  }
+
+  return null
+}
+
+export function resolveQueuePattern(freq, frequencyLabel = null) {
+  const configPattern = freq ? getFrequencyQueueConfig(freq).queuePattern : null
+  if (configPattern === 'weekdays' || configPattern === 'perWeek') {
+    return configPattern
+  }
+
+  return inferQueuePatternFromFrequencyLabel(frequencyLabel) ?? configPattern
+}
+
+export function supportsQueueDayOfWeek(freq, frequencyLabel = null) {
+  const queuePattern = resolveQueuePattern(freq, frequencyLabel)
+  if (!queuePattern) {
+    return false
+  }
+
+  return queuePattern !== 'daily'
+    && queuePattern !== 'weekdays'
+    && queuePattern !== 'perWeek'
+    && queuePattern !== 'asNeeded'
+}
+
+export function supportsQueueWeekdaysPicker(freq, frequencyLabel = null) {
+  const queuePattern = resolveQueuePattern(freq, frequencyLabel)
+  return queuePattern === 'weekdays' || queuePattern === 'perWeek'
+}
+
+export function supportsQueueDatePicker(freq) {
+  if (!freq) {
+    return false
+  }
+
+  return getFrequencyQueueConfig(freq).queuePattern === 'daily'
+}
+
+export function getQueueWeekdayPickCount(freq, frequencyLabel = null) {
+  const queuePattern = resolveQueuePattern(freq, frequencyLabel)
+  const config = freq ? getFrequencyQueueConfig(freq) : {
+    queuePattern: queuePattern ?? 'perWeek',
+    queueWeekdays: [1, 2, 3, 4, 5],
+    occurrencesPerWeek: 3,
+  }
+  const inferredCount = inferOccurrencesPerWeekFromLabel(frequencyLabel)
+  const configMatchesPattern = config.queuePattern === queuePattern
+
+  if (queuePattern === 'weekdays') {
+    return inferredCount
+      ?? (configMatchesPattern ? (config.queueWeekdays ?? [1, 2, 3, 4, 5]).length : null)
+      ?? 5
+  }
+
+  if (queuePattern === 'perWeek') {
+    return inferredCount
+      ?? (configMatchesPattern ? config.occurrencesPerWeek : null)
+      ?? 3
+  }
+
+  return null
+}
+
+export function normalizeQueueWeekdays(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return null
+  }
+
+  const days = [...new Set(
+    value
+      .map((day) => Number(day))
+      .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+  )].sort((a, b) => a - b)
+
+  return days.length > 0 ? days : null
+}
+
+export function getEffectiveQueueWeekdays(freq, itemQueueWeekdays) {
+  const normalized = normalizeQueueWeekdays(itemQueueWeekdays)
+  if (normalized) {
+    return normalized
+  }
+
+  const config = getFrequencyQueueConfig(freq)
+  if (config.queuePattern === 'weekdays') {
+    return config.queueWeekdays ?? [1, 2, 3, 4, 5]
+  }
+
+  return null
+}
+
 export async function ensureFrequencyQueueConfig(frequencyList) {
   const updates = []
 
@@ -110,6 +261,12 @@ export async function ensureFrequencyQueueConfig(frequencyList) {
     if ((freq.intervalDays == null || freq.intervalDays <= 0) && defaultIntervalDaysByRowId[freq.rowId] != null) {
       patch.intervalDays = defaultIntervalDaysByRowId[freq.rowId]
       freq.intervalDays = defaultIntervalDaysByRowId[freq.rowId]
+    }
+
+    const queuePattern = freq.queuePattern ?? defaults.queuePattern
+    if (queuePattern === 'asNeeded' && freq.intervalDays !== 1) {
+      patch.intervalDays = 1
+      freq.intervalDays = 1
     }
 
     if (Object.keys(patch).length > 0) {
@@ -280,6 +437,7 @@ export function getCatchUpDetails({
   completedAt,
   queueDueAt,
   dueDayOfWeek,
+  queueWeekdays,
   sort,
   rowId,
   todayStart,
@@ -319,6 +477,7 @@ export function getCatchUpDetails({
       completedAt: null,
       queueDueAt,
       dueDayOfWeek,
+      queueWeekdays,
       sort,
       rowId,
       todayStart: pastDayStart,
@@ -342,6 +501,8 @@ function getRawQueueDayIndexes({
   freq,
   completedAt,
   dueDayOfWeek,
+  queueWeekdays,
+  queueDueAt,
   sort,
   rowId,
   todayStart,
@@ -356,23 +517,30 @@ function getRawQueueDayIndexes({
     return []
   }
 
-  if (dueDayOfWeek != null && isMultiDayQueuePattern(config.queuePattern)) {
-    const dayIndex = getWeekdayInWindow(dueDayOfWeek, todayStart, maxDayIndex)
-    return dayIndex == null ? [] : [dayIndex]
-  }
-
   switch (config.queuePattern) {
-    case 'daily':
-      return Array.from({ length: maxDayIndex + 1 }, (_, dayIndex) => dayIndex)
+    case 'daily': {
+      const dayIndexes = Array.from({ length: maxDayIndex + 1 }, (_, dayIndex) => dayIndex)
+      if (queueDueAt == null) {
+        return dayIndexes
+      }
+
+      const startDay = getStartOfToday(queueDueAt)
+      return dayIndexes.filter((dayIndex) => todayStart + dayIndex * dayMs >= startDay)
+    }
 
     case 'weekdays':
       return getWeekdayDayIndexes(
         todayStart,
-        config.queueWeekdays ?? [1, 2, 3, 4, 5],
+        getEffectiveQueueWeekdays(freq, queueWeekdays) ?? [1, 2, 3, 4, 5],
         maxDayIndex,
       )
 
     case 'perWeek': {
+      const customWeekdays = normalizeQueueWeekdays(queueWeekdays)
+      if (customWeekdays?.length) {
+        return getWeekdayDayIndexes(todayStart, customWeekdays, maxDayIndex)
+      }
+
       if (groupAnchorDayOfWeek != null && dueDayOfWeek == null) {
         const dayIndex = getWeekdayInWindow(anchorDayOfWeek, todayStart, maxDayIndex)
         return dayIndex == null ? [] : [dayIndex]
@@ -430,6 +598,7 @@ export function getQueueDayIndexes({
   completedAt,
   queueDueAt,
   dueDayOfWeek,
+  queueWeekdays,
   sort,
   rowId,
   todayStart,
@@ -452,6 +621,8 @@ export function getQueueDayIndexes({
     freq,
     completedAt,
     dueDayOfWeek,
+    queueWeekdays,
+    queueDueAt,
     sort,
     rowId,
     todayStart,
@@ -482,50 +653,58 @@ export async function clearMultiDayQueuePins({
   const updates = []
 
   robeySubcategoryList.forEach((subcategory) => {
-    if (subcategory.queueDueAt == null) {
-      return
-    }
-
     const chore = choreMap[subcategory.choreRowId]
     const freq = getFreqFromMap(freqMap, chore?.freqId)
     const queuePattern = getFrequencyQueueConfig(freq).queuePattern
+    const patch = {}
 
-    if (!isMultiDayQueuePattern(queuePattern)) {
-      return
+    if ((queuePattern === 'weekdays' || queuePattern === 'perWeek') && subcategory.queueDueAt != null) {
+      patch.queueDueAt = null
+      subcategory.queueDueAt = null
     }
 
-    updates.push(
-      setDoc(
-        doc(db, 'RobeySubCategory', String(subcategory.rowId)),
-        { queueDueAt: null },
-        { merge: true },
-      ),
-    )
-    subcategory.queueDueAt = null
+    if ((queuePattern === 'daily' || queuePattern === 'weekdays') && subcategory.dueDayOfWeek != null) {
+      patch.dueDayOfWeek = null
+      subcategory.dueDayOfWeek = null
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updates.push(
+        setDoc(
+          doc(db, 'RobeySubCategory', String(subcategory.rowId)),
+          patch,
+          { merge: true },
+        ),
+      )
+    }
   })
 
   whenCompletedList.forEach((entry) => {
-    if (entry.queueDueAt == null) {
-      return
-    }
-
     const choreRowId = entry.chore ?? entry.choreRowid
     const chore = choreMap[choreRowId]
     const freq = getFreqFromMap(freqMap, chore?.freqId)
     const queuePattern = getFrequencyQueueConfig(freq).queuePattern
+    const patch = {}
 
-    if (!isMultiDayQueuePattern(queuePattern)) {
-      return
+    if ((queuePattern === 'weekdays' || queuePattern === 'perWeek') && entry.queueDueAt != null) {
+      patch.queueDueAt = null
+      entry.queueDueAt = null
     }
 
-    updates.push(
-      setDoc(
-        doc(db, 'When_Completed', String(entry.rowId ?? entry.id)),
-        { queueDueAt: null },
-        { merge: true },
-      ),
-    )
-    entry.queueDueAt = null
+    if ((queuePattern === 'daily' || queuePattern === 'weekdays') && entry.dueDayOfWeek != null) {
+      patch.dueDayOfWeek = null
+      entry.dueDayOfWeek = null
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updates.push(
+        setDoc(
+          doc(db, 'When_Completed', String(entry.rowId ?? entry.id)),
+          patch,
+          { merge: true },
+        ),
+      )
+    }
   })
 
   if (updates.length > 0) {

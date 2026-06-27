@@ -1,8 +1,77 @@
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, deleteDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { ensureFrequencyQueueConfig, getFrequencyIntervalDays } from './frequencyQueue'
+import { clearQueueDayMovesForChore } from './queueDayMove'
+import { transferChoreScheduleOnReassign } from './robeyQueueSchedule'
 
 const dayMs = 24 * 60 * 60 * 1000
+
+export function getAssignedChoreRowId(assignment) {
+  if (assignment.choreRowId != null && assignment.choreRowId !== '') {
+    return Number(assignment.choreRowId)
+  }
+
+  if (assignment.choreRowid != null && assignment.choreRowid !== '') {
+    return Number(assignment.choreRowid)
+  }
+
+  return Number(assignment.id)
+}
+
+export function getAssignedWhoRowId(assignment) {
+  if (assignment.who === null) {
+    return null
+  }
+
+  if (assignment.who != null && assignment.who !== '') {
+    return Number(assignment.who)
+  }
+
+  if (assignment.whoRowid != null && assignment.whoRowid !== '') {
+    return Number(assignment.whoRowid)
+  }
+
+  return null
+}
+
+export async function saveChoreAssignmentRecord(choreRowId, whoRowId) {
+  const ref = doc(db, 'Assigned_To', String(choreRowId))
+
+  if (whoRowId == null) {
+    await deleteDoc(ref).catch(() => {})
+    return
+  }
+
+  await setDoc(ref, { choreRowId, who: whoRowId }, { merge: true })
+}
+
+export async function applyChoreDeletion({
+  choreRowId,
+  whenCompletedList,
+  queueDayMoveList,
+}) {
+  await clearQueueDayMovesForChore(queueDayMoveList, choreRowId)
+
+  const completionMatches = whenCompletedList.filter((entry) => {
+    const entryChore = entry.chore ?? entry.choreRowid
+    return Number(entryChore) === Number(choreRowId)
+  })
+
+  if (completionMatches.length > 0) {
+    await Promise.all(
+      completionMatches.map((entry) => (
+        deleteDoc(doc(db, 'When_Completed', String(entry.rowId ?? entry.id)))
+      )),
+    )
+
+    completionMatches.forEach((entry) => {
+      const index = whenCompletedList.indexOf(entry)
+      if (index >= 0) {
+        whenCompletedList.splice(index, 1)
+      }
+    })
+  }
+}
 
 export { getFrequencyIntervalDays }
 
@@ -69,6 +138,52 @@ export async function resetDueSubcategories(subcategoryList, choresList, frequen
 
 export function getRobeyRowIdFromWhoList(whoList) {
   return whoList.find((person) => person.name === 'Robey')?.rowId ?? null
+}
+
+export async function applyChoreAssignmentChange({
+  choreRowId,
+  previousWhoRowId,
+  newWhoRowId,
+  choreInfo,
+  choresList,
+  whenCompletedList,
+  queueDayMoveList,
+  robeySubcategoryList,
+  whoList,
+}) {
+  if (previousWhoRowId != null) {
+    await clearQueueDayMovesForChore(queueDayMoveList, choreRowId, previousWhoRowId)
+  }
+
+  if (newWhoRowId != null && newWhoRowId !== previousWhoRowId) {
+    await clearQueueDayMovesForChore(queueDayMoveList, choreRowId, newWhoRowId)
+  }
+
+  const robeyRowId = getRobeyRowIdFromWhoList(whoList)
+
+  if (previousWhoRowId != null && newWhoRowId != null) {
+    await transferChoreScheduleOnReassign({
+      choreRowId,
+      fromPersonRowId: previousWhoRowId,
+      toPersonRowId: newWhoRowId,
+      whenCompletedList,
+      choresList,
+      robeySubcategoryList,
+      robeyRowId,
+    })
+  }
+
+  const nextChoreInfo = choreInfo.map((item) => (
+    item.choreRowId === choreRowId
+      ? { ...item, who: newWhoRowId }
+      : item
+  ))
+
+  await syncRobeySubcategoryAssignment({
+    choreInfo: nextChoreInfo,
+    robeySubcategoryList,
+    whoList,
+  })
 }
 
 export async function syncRobeySubcategoryAssignment({

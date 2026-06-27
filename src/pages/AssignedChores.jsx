@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { getChallengeColorMap, getChallengeNameStyle } from '../utils/challengeLevelColors'
 import { sortChoresByFrequency } from '../utils/sortChores'
+import { applyChoreAssignmentChange, saveChoreAssignmentRecord } from '../utils/subcategoryDue'
 import { useViewSelection } from '../utils/viewSelectionStorage'
 
 const ASSIGNED_VIEW_STORAGE_KEY = 'chores-view-assigned-chores'
@@ -44,7 +45,18 @@ async function hasFailureInTracking(whoRowId, choreRowId) {
   })
 }
 
-function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList, seedStatus, reloadData }) {
+function AssignedChores({
+  choreInfo,
+  setChoreInfo,
+  whoList,
+  challengeLevelsList,
+  choresList,
+  whenCompletedList,
+  queueDayMoveList,
+  robeySubcategoryList,
+  seedStatus,
+  reloadData,
+}) {
   const [draggedChoreRowId, setDraggedChoreRowId] = useState(null)
   const [dragOverWho, setDragOverWho] = useState(null)
   const [assignWarning, setAssignWarning] = useState(null)
@@ -127,11 +139,17 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
     return sortChoresByFrequency(sectionChores)
   }
 
+  const unassignedChores = useMemo(() => getChoresForSection(null), [choreInfo])
+
+  const unassignedHidden = unassignedChores.length > 0
+    && !isShowingAll
+    && !isSectionSelected('unassigned')
+
   async function handleDrop(targetWhoRowId) {
     if (draggedChoreRowId == null) return
 
-    const choreRowId = draggedChoreRowId
-    const currentItem = choreInfo.find((item) => item.choreRowId === choreRowId)
+    const choreRowId = Number(draggedChoreRowId)
+    const currentItem = choreInfo.find((item) => Number(item.choreRowId) === choreRowId)
     if (!currentItem || currentItem.who === targetWhoRowId) {
       setDraggedChoreRowId(null)
       setDragOverWho(null)
@@ -155,8 +173,18 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
     )
 
     try {
-      await updateDoc(doc(db, 'Assigned_To', String(choreRowId)), {
-        who: targetWhoRowId,
+      await saveChoreAssignmentRecord(choreRowId, targetWhoRowId)
+
+      await applyChoreAssignmentChange({
+        choreRowId,
+        previousWhoRowId: currentItem.who,
+        newWhoRowId: targetWhoRowId,
+        choreInfo,
+        choresList,
+        whenCompletedList,
+        queueDayMoveList,
+        robeySubcategoryList,
+        whoList,
       })
 
       if (shouldWarn) {
@@ -224,6 +252,13 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
                 </button>
               </div>
 
+              {unassignedHidden && (
+                <p className="AssignedChores-Empty">
+                  {unassignedChores.length} unassigned {unassignedChores.length === 1 ? 'chore' : 'chores'}.
+                  {' '}Click <strong>Unassigned</strong> or <strong>All</strong> above to assign them.
+                </p>
+              )}
+
               {visibleSections.length === 0 ? (
                 <p className="AssignedChores-Empty">No columns selected. Click All or Clear to reset.</p>
               ) : (
@@ -261,7 +296,7 @@ function AssignedChores({ choreInfo, setChoreInfo, whoList, challengeLevelsList,
                           key={item.choreRowId}
                           className={`AssignedChores-ListItem${draggedChoreRowId === item.choreRowId ? ' AssignedChores-ListItem-Dragging' : ''}`}
                           draggable
-                          onDragStart={() => setDraggedChoreRowId(item.choreRowId)}
+                          onDragStart={() => setDraggedChoreRowId(Number(item.choreRowId))}
                           onDragEnd={() => {
                             setDraggedChoreRowId(null)
                             setDragOverWho(null)

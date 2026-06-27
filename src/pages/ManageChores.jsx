@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { applyChoreDeletion } from '../utils/subcategoryDue'
 
 const emptyForm = {
   chore: '',
@@ -12,8 +13,12 @@ const emptyForm = {
 
 function ManageChores({
   choresList,
+  setChoresList,
   challengeLevelsList,
   frequencyOfList,
+  whenCompletedList,
+  queueDayMoveList,
+  setChoreInfo,
   seedStatus,
   reloadData,
 }) {
@@ -141,14 +146,59 @@ function ManageChores({
     try {
       const maxRowId = choresList.reduce((max, chore) => Math.max(max, chore.rowId || 0), 0)
       const newRowId = maxRowId + 1
+      const challengeLevelId = Number(addForm.challengeLevel)
+      const freqId = Number(addForm.freqId)
+      const newChoreRecord = {
+        rowId: newRowId,
+        chore: addForm.chore.trim(),
+        freqId,
+        challengeLevel: challengeLevelId,
+        notes: addForm.notes.trim(),
+        active: Number(addForm.active),
+      }
+
+      if (setChoreInfo) {
+        setChoreInfo((prev) => {
+          if (prev.some((item) => item.choreRowId === newRowId)) {
+            return prev
+          }
+
+          return [
+            ...prev,
+            {
+              choreRowId: newRowId,
+              who: null,
+              name: null,
+              chore: newChoreRecord.chore,
+              notes: newChoreRecord.notes || null,
+              challenge: challengeMap[challengeLevelId] ?? null,
+              challengeLevelId,
+              points: challengePointsMap[challengeLevelId] ?? 0,
+              frequency: frequencyMap[freqId] ?? null,
+              freqId,
+              frequencySort: frequencySortMap[freqId] ?? null,
+            },
+          ]
+        })
+      }
+
+      if (setChoresList) {
+        setChoresList((prev) => {
+          if (prev.some((item) => item.rowId === newRowId)) {
+            return prev
+          }
+
+          return [...prev, newChoreRecord]
+        })
+      }
 
       await setDoc(doc(db, 'Chores', String(newRowId)), {
         rowId: newRowId,
-        chore: addForm.chore.trim(),
-        freqId: Number(addForm.freqId),
-        challengeLevel: Number(addForm.challengeLevel),
-        notes: addForm.notes.trim(),
-        active: Number(addForm.active),
+        chore: newChoreRecord.chore,
+        freqId: newChoreRecord.freqId,
+        challengeLevel: newChoreRecord.challengeLevel,
+        notes: newChoreRecord.notes,
+        active: newChoreRecord.active,
       })
 
       setAddForm(emptyForm)
@@ -182,6 +232,9 @@ function ManageChores({
       )
 
       cancelEdit()
+      if (Number(editForm.active) === 0 && setChoreInfo) {
+        setChoreInfo((prev) => prev.filter((item) => item.choreRowId !== rowId))
+      }
       await reloadData({ silent: true })
       setSaveStatus('idle')
     } catch (err) {
@@ -209,6 +262,16 @@ function ManageChores({
         deleteDoc(doc(db, 'Assigned_To', String(chore.rowId))).catch(() => {}),
         ...subcategoryDeletes,
       ])
+
+      await applyChoreDeletion({
+        choreRowId: chore.rowId,
+        whenCompletedList,
+        queueDayMoveList,
+      })
+
+      if (setChoreInfo) {
+        setChoreInfo((prev) => prev.filter((item) => item.choreRowId !== chore.rowId))
+      }
 
       if (editingRowId === chore.rowId) {
         cancelEdit()

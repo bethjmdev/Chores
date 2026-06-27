@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
 import { ensureFrequencyQueueConfig, clearMultiDayQueuePins } from './utils/frequencyQueue'
-import { resetDueSubcategories, syncRobeySubcategoryAssignment } from './utils/subcategoryDue'
+import { resetDueSubcategories, syncRobeySubcategoryAssignment, getAssignedChoreRowId, getAssignedWhoRowId } from './utils/subcategoryDue'
 import { seedTimeOfDayIfEmpty, ensureTimeOfDayConfig } from './seedTimeOfDay'
 // import { seedChoresIfEmpty } from './seedChores'
 // import { seedFrequencyOfIfEmpty } from './seedFrequencyOf'
@@ -77,6 +77,7 @@ function App() {
   const [robeySubcategoryList, setRobeySubcategoryList] = useState([])
   const [whenCompletedList, setWhenCompletedList] = useState([])
   const [timeOfDayList, setTimeOfDayList] = useState([])
+  const [queueDayMoveList, setQueueDayMoveList] = useState([])
   const [activeNav, setActiveNav] = useState('Assigned Chores')
   const hasLoaded = useRef(false)
 
@@ -88,7 +89,7 @@ function App() {
     try {
       await seedTimeOfDayIfEmpty()
 
-      const [assignedToSnapshot, whoSnapshot, frequencySnapshot, challengeLevelsSnapshot, choresSnapshot, robeySubcategorySnapshot, whenCompletedSnapshot, timeOfDaySnapshot] = await Promise.all([
+      const [assignedToSnapshot, whoSnapshot, frequencySnapshot, challengeLevelsSnapshot, choresSnapshot, robeySubcategorySnapshot, whenCompletedSnapshot, timeOfDaySnapshot, queueDayMoveSnapshot] = await Promise.all([
         getDocs(collection(db, 'Assigned_To')),
         getDocs(collection(db, 'Who')),
         getDocs(collection(db, 'Frequency_Of')),
@@ -97,6 +98,7 @@ function App() {
         getDocs(collection(db, 'RobeySubCategory')),
         getDocs(collection(db, 'When_Completed')),
         getDocs(collection(db, 'Time_Of_Day')),
+        getDocs(collection(db, 'Queue_Day_Move')),
       ])
 
       const assignedToData = assignedToSnapshot.docs.map((docSnap) => ({
@@ -131,6 +133,10 @@ function App() {
         id: docSnap.id,
         ...docSnap.data(),
       }))
+      const queueDayMoveData = queueDayMoveSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }))
 
       await ensureFrequencyQueueConfig(frequencyOfData)
       await ensureTimeOfDayConfig(timeOfDayData)
@@ -149,10 +155,15 @@ function App() {
       const frequencySortMap = Object.fromEntries(frequencyOfData.map((freq) => [freq.rowId, freq.sort]))
 
       const assignedToMap = Object.fromEntries(
-        assignedToData.map((assignment) => [assignment.choreRowId, assignment.who ?? null]),
+        assignedToData.map((assignment) => [
+          getAssignedChoreRowId(assignment),
+          getAssignedWhoRowId(assignment),
+        ]),
       )
 
-      const joinedChoreInfo = choresData.map((chore) => {
+      const joinedChoreInfo = choresData
+        .filter((chore) => chore.active !== 0)
+        .map((chore) => {
         const who = assignedToMap[chore.rowId] ?? null
         const challengeLevelId = chore.challengeLevel
         const freqId = chore.freqId
@@ -185,6 +196,7 @@ function App() {
       setRobeySubcategoryList(robeySubcategoryData.sort((a, b) => a.rowId - b.rowId))
       setWhenCompletedList(whenCompletedData.sort((a, b) => (a.rowId || 0) - (b.rowId || 0)))
       setTimeOfDayList(timeOfDayData.sort((a, b) => a.sort - b.sort))
+      setQueueDayMoveList(queueDayMoveData.sort((a, b) => (a.rowId || 0) - (b.rowId || 0)))
       setChoreInfo(joinedChoreInfo)
       setSeedStatus('ready')
     } catch (err) {
@@ -246,12 +258,14 @@ function App() {
             choreInfo,
             setChoreInfo,
             choresList,
+            setChoresList,
             whoList,
             challengeLevelsList,
             frequencyOfList,
             robeySubcategoryList,
             whenCompletedList,
             timeOfDayList,
+            queueDayMoveList,
             seedStatus,
             reloadData: loadData,
           })}
